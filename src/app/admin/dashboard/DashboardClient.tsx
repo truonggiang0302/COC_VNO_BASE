@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
-import { Plus, LogOut, Shield, Pencil, Trash2, ExternalLink } from 'lucide-react'
+import { Plus, LogOut, Shield, Pencil, Trash2, ExternalLink, Download, Star } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
 import type { Base } from '@/types'
 import { BASE_TYPE_COLORS } from '@/types'
@@ -96,12 +96,11 @@ export default function DashboardClient({ initialBases, error, userEmail }: Prop
         )}
 
         {/* Stats */}
-        <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-3">
           {[
             { label: 'Tổng bases', value: bases.length },
-            { label: 'War bases', value: bases.filter(b => b.base_type === 'War').length },
-            { label: 'Trophy bases', value: bases.filter(b => b.base_type === 'Trophy').length },
-            { label: 'Farming bases', value: bases.filter(b => b.base_type === 'Farming').length },
+            { label: 'Tổng lượt tải', value: bases.reduce((s, b) => s + b.downloads, 0) },
+            { label: 'Đã có đánh giá', value: bases.filter(b => b.rating_count > 0).length },
           ].map(stat => (
             <div key={stat.label} className="stone-card rounded-xl p-4 text-center">
               <div className="text-2xl font-bold text-gold-400">{stat.value}</div>
@@ -124,6 +123,12 @@ export default function DashboardClient({ initialBases, error, userEmail }: Prop
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-stone-500">Tên</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-stone-500">TH</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-stone-500">Loại</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-stone-500 hidden sm:table-cell">
+                    <Download className="inline h-3 w-3" />
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-stone-500 hidden sm:table-cell">
+                    <Star className="inline h-3 w-3" />
+                  </th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-stone-500 hidden sm:table-cell">Link</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-stone-500 hidden md:table-cell">Ngày tạo</th>
                   <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-stone-500">Thao tác</th>
@@ -132,7 +137,7 @@ export default function DashboardClient({ initialBases, error, userEmail }: Prop
               <tbody>
                 {bases.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="py-12 text-center text-stone-500">
+                    <td colSpan={8} className="py-12 text-center text-stone-500">
                       Chưa có base nào. Bấm &ldquo;Thêm Base&rdquo; để bắt đầu.
                     </td>
                   </tr>
@@ -157,6 +162,12 @@ export default function DashboardClient({ initialBases, error, userEmail }: Prop
                       <span className={cn('rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase', BASE_TYPE_COLORS[base.base_type])}>
                         {base.base_type}
                       </span>
+                    </td>
+                    <td className="px-4 py-3 hidden sm:table-cell text-stone-500 text-xs">
+                      {base.downloads}
+                    </td>
+                    <td className="px-4 py-3 hidden sm:table-cell text-stone-500 text-xs">
+                      {base.rating_count > 0 ? `${base.rating.toFixed(1)} (${base.rating_count})` : '-'}
                     </td>
                     <td className="px-4 py-3 hidden sm:table-cell">
                       <a

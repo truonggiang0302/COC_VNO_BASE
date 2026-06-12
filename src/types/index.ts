@@ -14,6 +14,9 @@ export interface Base {
   image_url: string
   base_link: string
   description: string | null
+  downloads: number
+  rating: number
+  rating_count: number
   created_at: string
 }
 
@@ -32,7 +35,7 @@ export const BASE_TYPES: BaseType[] = [
   'Anti 3 Star',
 ]
 
-export const TOWNHALL_LEVELS = Array.from({ length: 11 }, (_, i) => i + 9) // 9..18
+export const TOWNHALL_LEVELS = Array.from({ length: 10 }, (_, i) => i + 9) // 9..18
 
 export const BASE_TYPE_COLORS: Record<BaseType, string> = {
   'Farming':    'bg-army-700 text-army-400 border border-army-600',

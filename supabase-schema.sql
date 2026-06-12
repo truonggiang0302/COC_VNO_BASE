@@ -17,6 +17,9 @@ CREATE TABLE IF NOT EXISTS public.bases (
   image_url   TEXT NOT NULL,
   base_link   TEXT NOT NULL,
   description TEXT,
+  downloads   INTEGER NOT NULL DEFAULT 0,
+  rating      DECIMAL(3,1) NOT NULL DEFAULT 0.0,
+  rating_count INTEGER NOT NULL DEFAULT 0,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -62,6 +65,30 @@ CREATE INDEX IF NOT EXISTS bases_name_idx ON public.bases USING GIN (to_tsvector
 -- Storage > New Bucket > Name: base-images > Public: ON
 -- Sau đó thêm storage policy cho phép upload:
 -- ============================================================
+
+-- 9. Function an toàn để tăng downloads (tránh race condition)
+CREATE OR REPLACE FUNCTION increment_downloads(base_id UUID)
+RETURNS void
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  UPDATE public.bases SET downloads = downloads + 1 WHERE id = base_id;
+END;
+$$;
+
+-- 10. Function an toàn để cập nhật rating
+CREATE OR REPLACE FUNCTION rate_base(base_id UUID, new_rating INTEGER)
+RETURNS void
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  UPDATE public.bases
+  SET
+    rating = ROUND(((rating * rating_count) + new_rating)::numeric / (rating_count + 1), 1),
+    rating_count = rating_count + 1
+  WHERE id = base_id;
+END;
+$$;
 
 -- Policy cho phép authenticated user upload
 INSERT INTO storage.buckets (id, name, public)
