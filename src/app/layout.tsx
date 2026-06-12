@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     'Tổng hợp và chia sẻ base layout Clash of Clans theo Town Hall, chiến thuật Farming, War, Trophy và nhiều hơn nữa.',
   openGraph: {
     title: 'CoC Base Hub',
-    description: 'Chia sẻ và tìm kiếm base CoC tốt nhất',
+    description: 'Chia sẻ và tìm kiếm base CoC tốt nhất cho anh em VietNamOnline',
     type: 'website',
   },
 }
