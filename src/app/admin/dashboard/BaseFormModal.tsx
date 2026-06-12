@@ -99,7 +99,13 @@ export default function BaseFormModal({ base, onClose, onSaved }: Props) {
         onSaved(data as Base, false)
       }
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Có lỗi xảy ra')
+      const message =
+        err instanceof Error
+          ? err.message
+          : typeof err === 'object' && err !== null && 'message' in err
+            ? (err as { message: string }).message
+            : 'Có lỗi xảy ra'
+      toast.error(message)
     } finally {
       setSaving(false)
     }
