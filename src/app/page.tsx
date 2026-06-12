@@ -26,10 +26,10 @@ export default async function HomePage({ searchParams }: HomePageProps) {
       <section className="relative border-b border-stone-750 bg-gradient-to-b from-[#1e1810] to-[#141210] py-10">
         <div className="mx-auto max-w-7xl px-4 text-center">
           <h1 className="gold-shimmer mb-2 font-display text-4xl font-bold tracking-tight sm:text-5xl">
-            CoC Base Hub
+            COC VNO
           </h1>
           <p className="text-stone-400">
-            Khám phá và chia sẻ base layout Clash of Clans tốt nhất
+            Khám phá và chia sẻ base layout Clash of Clans tốt nhất cho anh em clan VietNamOnline
           </p>
         </div>
         {/* Decorative lines */}
@@ -52,7 +52,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
       </main>
 
       <footer className="border-t border-stone-750 py-6 text-center text-xs text-stone-600">
-        © {new Date().getFullYear()} CoC Base Hub – Không liên kết với Supercell
+        © {new Date().getFullYear()} CoC VNO – Không liên kết với Supercell
       </footer>
     </div>
   )
