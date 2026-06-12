@@ -2,8 +2,7 @@
 
 import Image from 'next/image'
 import { useState } from 'react'
-import toast from 'react-hot-toast'
-import { Copy, ExternalLink, CheckCheck, Shield } from 'lucide-react'
+import { ExternalLink, Shield } from 'lucide-react'
 import { type Base, BASE_TYPE_COLORS } from '@/types'
 import { cn } from '@/lib/cn'
 
@@ -12,21 +11,9 @@ interface BaseCardProps {
 }
 
 export default function BaseCard({ base }: BaseCardProps) {
-  const [copied, setCopied] = useState(false)
   const [imgError, setImgError] = useState(false)
 
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(base.base_link)
-      setCopied(true)
-      toast.success(`Đã copy link "${base.name}"!`)
-      setTimeout(() => setCopied(false), 2000)
-    } catch {
-      toast.error('Không thể copy – hãy thử lại.')
-    }
-  }
-
-  const handleOpen = () => {
+  const handleOpenLink = () => {
     window.open(base.base_link, '_blank', 'noopener,noreferrer')
   }
 
@@ -86,33 +73,11 @@ export default function BaseCard({ base }: BaseCardProps) {
         {/* Actions */}
         <div className="mt-auto flex gap-2 pt-1">
           <button
-            onClick={handleCopy}
-            className={cn(
-              'flex flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-2 text-xs font-semibold transition-all',
-              copied
-                ? 'border border-army-600 bg-army-800/50 text-army-400'
-                : 'btn-gold',
-            )}
-          >
-            {copied ? (
-              <>
-                <CheckCheck className="h-3.5 w-3.5" />
-                Đã copy!
-              </>
-            ) : (
-              <>
-                <Copy className="h-3.5 w-3.5" />
-                Copy Link
-              </>
-            )}
-          </button>
-
-          <button
-            onClick={handleOpen}
-            title="Mở trong game"
-            className="flex items-center justify-center rounded-md border border-stone-750 bg-stone-850 px-3 py-2 text-stone-400 transition-colors hover:border-gold-700 hover:text-gold-400"
+            onClick={handleOpenLink}
+            className="btn-gold flex flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-2 text-xs font-semibold transition-all"
           >
             <ExternalLink className="h-3.5 w-3.5" />
+            Mở Link
           </button>
         </div>
       </div>
