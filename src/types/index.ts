@@ -32,7 +32,7 @@ export const BASE_TYPES: BaseType[] = [
   'Anti 3 Star',
 ]
 
-export const TOWNHALL_LEVELS = Array.from({ length: 10 }, (_, i) => i + 9) // 9..17
+export const TOWNHALL_LEVELS = Array.from({ length: 9 }, (_, i) => i + 9) // 9..17
 
 export const BASE_TYPE_COLORS: Record<BaseType, string> = {
   'Farming':    'bg-army-700 text-army-400 border border-army-600',
