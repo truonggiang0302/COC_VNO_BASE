@@ -21,19 +21,48 @@ export default function Header() {
 
   useEffect(() => {
     async function loadUser() {
-      const { data: { user: authUser } } = await supabase.auth.getUser()
-      if (authUser) {
-        const { data: profile } = await supabase
+      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser()
+      if (authError) {
+        console.error('Header: Auth error', authError)
+        setLoading(false)
+        return
+      }
+
+      if (!authUser) {
+        console.log('Header: No authenticated user')
+        setLoading(false)
+        return
+      }
+
+      console.log('Header: Auth user found', authUser.email)
+
+      // Thử lấy profile, nếu lỗi RLS thì dùng role mặc định
+      let role: UserRole = 'viewer'
+
+      try {
+        const { data: profile, error } = await supabase
           .from('profiles')
           .select('role')
           .eq('id', authUser.id)
           .single()
 
-        setUser({
-          email: authUser.email ?? '',
-          role: (profile?.role as UserRole) ?? 'viewer',
-        })
+        if (error) {
+          console.error('Header: Profile query error', error.message, error.code)
+          // Nếu lỗi RLS (401/403) hoặc profile không tồn tại, dùng mặc định
+        } else if (profile) {
+          console.log('Header: Profile found', profile)
+          role = profile.role as UserRole
+        } else {
+          console.log('Header: No profile row found')
+        }
+      } catch (e) {
+        console.error('Header: Unexpected error loading profile', e)
       }
+
+      setUser({
+        email: authUser.email ?? '',
+        role,
+      })
       setLoading(false)
     }
     loadUser()
