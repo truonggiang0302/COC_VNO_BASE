@@ -91,13 +91,16 @@ export default function UserManage() {
   }
 
   const handleChangeRole = async (userId: string, newRole: UserRole) => {
-    const { error } = await supabase
-      .from('profiles')
-      .update({ role: newRole })
-      .eq('id', userId)
+    const res = await fetch('/api/admin/update-role', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, role: newRole }),
+    })
 
-    if (error) {
-      toast.error('Đổi quyền thất bại')
+    const data = await res.json()
+
+    if (!res.ok) {
+      toast.error('Đổi quyền thất bại: ' + data.error)
     } else {
       toast.success('Đã đổi quyền thành công!')
       loadUsers()
