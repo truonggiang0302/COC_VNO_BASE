@@ -12,7 +12,21 @@ export default async function DashboardPage() {
   } = await supabase.auth.getUser()
 
   if (!user) {
-    redirect('/admin/login')
+    redirect('/auth/login')
+  }
+
+  // Lấy role từ profiles
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  const role = profile?.role ?? 'viewer'
+
+  // Nếu là viewer → không có quyền vào dashboard
+  if (role === 'viewer') {
+    redirect('/')
   }
 
   const { data: bases, error } = await supabase
@@ -25,6 +39,7 @@ export default async function DashboardPage() {
       initialBases={bases ?? []}
       error={error?.message}
       userEmail={user.email ?? ''}
+      userRole={role}
     />
   )
 }

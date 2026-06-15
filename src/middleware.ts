@@ -12,7 +12,6 @@ export async function middleware(request: NextRequest) {
                 getAll() {
                     return request.cookies.getAll()
                 },
-                // Dòng mới - có type
                 setAll(cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[]) {
                     cookiesToSet.forEach(({name, value}) =>
                         request.cookies.set(name, value),
@@ -32,19 +31,21 @@ export async function middleware(request: NextRequest) {
 
     const {pathname} = request.nextUrl
 
-    // Protect /admin/dashboard and sub-routes
-    if (pathname.startsWith('/admin/dashboard')) {
-        if (!user) {
-            const redirectUrl = request.nextUrl.clone()
-            redirectUrl.pathname = '/admin/login'
-            return NextResponse.redirect(redirectUrl)
-        }
+    // Public routes (không cần login)
+    const publicRoutes = ['/auth/login', '/auth/forgot-password']
+    const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route))
+
+    // Nếu chưa login và không phải public route → redirect về /auth/login
+    if (!user && !isPublicRoute) {
+        const redirectUrl = request.nextUrl.clone()
+        redirectUrl.pathname = '/auth/login'
+        return NextResponse.redirect(redirectUrl)
     }
 
-    // If already logged in, redirect away from login page
-    if (pathname === '/admin/login' && user) {
+    // Nếu đã login và đang ở trang login → redirect về trang chủ
+    if (user && pathname === '/auth/login') {
         const redirectUrl = request.nextUrl.clone()
-        redirectUrl.pathname = '/admin/dashboard'
+        redirectUrl.pathname = '/'
         return NextResponse.redirect(redirectUrl)
     }
 
@@ -52,5 +53,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-    matcher: ['/admin/:path*'],
+    matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
 }

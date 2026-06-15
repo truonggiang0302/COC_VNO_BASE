@@ -23,50 +23,133 @@ CREATE TABLE IF NOT EXISTS public.bases (
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- 3. Bật Row Level Security
-ALTER TABLE public.bases ENABLE ROW LEVEL SECURITY;
+-- 3. Tạo bảng profiles (phân quyền user)
+CREATE TABLE IF NOT EXISTS public.profiles (
+  id          UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  email       TEXT NOT NULL,
+  role        TEXT NOT NULL DEFAULT 'viewer' CHECK (role IN ('super_admin', 'admin', 'viewer')),
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
 
--- 4. Policy: Mọi người đều có thể đọc (SELECT)
-CREATE POLICY "Public can read bases"
+-- 4. Trigger: Tự động tạo profile khi có user mới từ auth
+CREATE OR REPLACE FUNCTION handle_new_user()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = ''
+AS $$
+BEGIN
+  INSERT INTO public.profiles (id, email, role)
+  VALUES (NEW.id, NEW.email, 'viewer');
+  RETURN NEW;
+END;
+$$;
+
+CREATE OR REPLACE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION handle_new_user();
+
+-- 5. Bật Row Level Security
+ALTER TABLE public.bases ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+
+-- 6. Policy cho bases: Authenticated user có thể SELECT
+CREATE POLICY "Authenticated users can read bases"
   ON public.bases
   FOR SELECT
+  TO authenticated
   USING (true);
 
--- 5. Policy: Chỉ authenticated user mới INSERT
-CREATE POLICY "Authenticated users can insert"
+-- 7. Policy cho bases: admin và super_admin có thể INSERT
+CREATE POLICY "Admins can insert bases"
   ON public.bases
   FOR INSERT
   TO authenticated
-  WITH CHECK (true);
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE id = auth.uid() AND role IN ('admin', 'super_admin')
+    )
+  );
 
--- 6. Policy: Chỉ authenticated user mới UPDATE
-CREATE POLICY "Authenticated users can update"
+-- 8. Policy cho bases: admin và super_admin có thể UPDATE
+CREATE POLICY "Admins can update bases"
   ON public.bases
   FOR UPDATE
   TO authenticated
-  USING (true)
-  WITH CHECK (true);
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE id = auth.uid() AND role IN ('admin', 'super_admin')
+    )
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE id = auth.uid() AND role IN ('admin', 'super_admin')
+    )
+  );
 
--- 7. Policy: Chỉ authenticated user mới DELETE
-CREATE POLICY "Authenticated users can delete"
+-- 9. Policy cho bases: admin và super_admin có thể DELETE
+CREATE POLICY "Admins can delete bases"
   ON public.bases
   FOR DELETE
   TO authenticated
-  USING (true);
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE id = auth.uid() AND role IN ('admin', 'super_admin')
+    )
+  );
 
--- 8. Index để tìm kiếm nhanh hơn
+-- 10. Policy cho profiles: user có thể đọc profile của chính mình
+CREATE POLICY "Users can read own profile"
+  ON public.profiles
+  FOR SELECT
+  TO authenticated
+  USING (id = auth.uid());
+
+-- 11. Policy cho profiles: super_admin có thể đọc tất cả profile
+CREATE POLICY "Super admin can read all profiles"
+  ON public.profiles
+  FOR SELECT
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE id = auth.uid() AND role = 'super_admin'
+    )
+  );
+
+-- 12. Policy cho profiles: super_admin có thể UPDATE role của người khác
+CREATE POLICY "Super admin can update profiles"
+  ON public.profiles
+  FOR UPDATE
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE id = auth.uid() AND role = 'super_admin'
+    )
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE id = auth.uid() AND role = 'super_admin'
+    )
+  );
+
+-- 13. Index
 CREATE INDEX IF NOT EXISTS bases_townhall_idx ON public.bases (townhall);
 CREATE INDEX IF NOT EXISTS bases_base_type_idx ON public.bases (base_type);
 CREATE INDEX IF NOT EXISTS bases_created_at_idx ON public.bases (created_at DESC);
 CREATE INDEX IF NOT EXISTS bases_name_idx ON public.bases USING GIN (to_tsvector('simple', name));
+CREATE INDEX IF NOT EXISTS profiles_role_idx ON public.profiles (role);
 
 -- ============================================================
--- STORAGE: Tạo bucket 'base-images' thủ công trong Supabase
--- Storage > New Bucket > Name: base-images > Public: ON
--- Sau đó thêm storage policy cho phép upload:
+-- STORAGE: Bucket 'base-images'
 -- ============================================================
 
--- 9. Function an toàn để tăng downloads (tránh race condition)
+-- 14. Function increment_downloads
 CREATE OR REPLACE FUNCTION increment_downloads(base_id UUID)
 RETURNS void
 LANGUAGE plpgsql
@@ -76,7 +159,7 @@ BEGIN
 END;
 $$;
 
--- 10. Function an toàn để cập nhật rating
+-- 15. Function rate_base
 CREATE OR REPLACE FUNCTION rate_base(base_id UUID, new_rating INTEGER)
 RETURNS void
 LANGUAGE plpgsql
@@ -90,7 +173,7 @@ BEGIN
 END;
 $$;
 
--- Policy cho phép authenticated user upload
+-- Storage policies
 INSERT INTO storage.buckets (id, name, public)
 VALUES ('base-images', 'base-images', true)
 ON CONFLICT (id) DO NOTHING;
@@ -101,7 +184,7 @@ CREATE POLICY "Authenticated users can upload images"
   TO authenticated
   WITH CHECK (bucket_id = 'base-images');
 
-CREATE POLICY "Public can read images"
+CREATE POLICY "Authenticated users can read images"
   ON storage.objects
   FOR SELECT
   USING (bucket_id = 'base-images');

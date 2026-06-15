@@ -20,6 +20,15 @@ export interface Base {
   created_at: string
 }
 
+export type UserRole = 'super_admin' | 'admin' | 'viewer'
+
+export interface Profile {
+  id: string
+  email: string
+  role: UserRole
+  created_at: string
+}
+
 export interface BaseFilters {
   search?: string
   townhall?: string
