@@ -68,7 +68,7 @@ export default function Header() {
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
         {/* Logo */}
         <Link href="/" className="group flex items-center gap-3">
-          <div className="relative h-10 w-10 transition-transform group-hover:scale-105">
+          <div className="relative h-14 w-14 transition-transform group-hover:scale-105">
             <Image
               src="/logo_vno.png"
               alt="CoC VNO Logo"
