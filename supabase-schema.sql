@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS public.bases (
   downloads   INTEGER NOT NULL DEFAULT 0,
   rating      DECIMAL(3,1) NOT NULL DEFAULT 0.0,
   rating_count INTEGER NOT NULL DEFAULT 0,
+  created_by  UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -27,6 +28,7 @@ CREATE TABLE IF NOT EXISTS public.bases (
 CREATE TABLE IF NOT EXISTS public.profiles (
   id          UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   email       TEXT NOT NULL,
+  name        TEXT NOT NULL DEFAULT '',
   role        TEXT NOT NULL DEFAULT 'viewer' CHECK (role IN ('super_admin', 'admin', 'viewer')),
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -38,8 +40,8 @@ LANGUAGE plpgsql
 SECURITY DEFINER SET search_path = ''
 AS $$
 BEGIN
-  INSERT INTO public.profiles (id, email, role)
-  VALUES (NEW.id, NEW.email, 'viewer');
+  INSERT INTO public.profiles (id, email, name, role)
+  VALUES (NEW.id, NEW.email, '', 'viewer');
   RETURN NEW;
 END;
 $$;

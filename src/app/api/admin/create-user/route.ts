@@ -3,10 +3,14 @@ import { NextResponse } from 'next/server'
 
 export async function POST(request: Request) {
   try {
-    const { email, password, role } = await request.json()
+    const { email, password, role, name } = await request.json()
 
     if (!email || !password) {
       return NextResponse.json({ error: 'Thiếu email hoặc mật khẩu' }, { status: 400 })
+    }
+
+    if (!name || !name.trim()) {
+      return NextResponse.json({ error: 'Thiếu tên hiển thị' }, { status: 400 })
     }
 
     if (password.length < 6) {
@@ -36,21 +40,25 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: authError.message }, { status: 400 })
     }
 
-    // Cập nhật role (nếu không phải viewer)
-    if (role && role !== 'viewer' && authData.user) {
+    // Cập nhật name + role
+    if (authData.user) {
+      const updateData: Record<string, string> = { name: name.trim() }
+      if (role && role !== 'viewer') {
+        updateData.role = role
+      }
       const { error: profileError } = await supabaseAdmin
         .from('profiles')
-        .update({ role })
+        .update(updateData)
         .eq('id', authData.user.id)
 
       if (profileError) {
-        console.error('Failed to update role:', profileError)
+        console.error('Failed to update profile:', profileError)
       }
     }
 
     return NextResponse.json({
       success: true,
-      user: { id: authData.user?.id, email: authData.user?.email },
+      user: { id: authData.user?.id, email: authData.user?.email, name: name.trim() },
     })
   } catch (err) {
     console.error('Create user error:', err)

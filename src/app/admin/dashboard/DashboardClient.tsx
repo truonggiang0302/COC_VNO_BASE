@@ -178,6 +178,7 @@ export default function DashboardClient({ initialBases, error, userEmail, userRo
                       <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-stone-500 hidden sm:table-cell">
                         <Star className="inline h-3 w-3" />
                       </th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-stone-500 hidden sm:table-cell">Người tạo</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-stone-500 hidden sm:table-cell">Link</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-stone-500 hidden md:table-cell">Ngày tạo</th>
                       <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-stone-500">Thao tác</th>
@@ -186,7 +187,7 @@ export default function DashboardClient({ initialBases, error, userEmail, userRo
                   <tbody>
                     {bases.length === 0 && (
                       <tr>
-                        <td colSpan={8} className="py-12 text-center text-stone-500">
+                        <td colSpan={9} className="py-12 text-center text-stone-500">
                           Chưa có base nào. Bấm &ldquo;Thêm Base&rdquo; để bắt đầu.
                         </td>
                       </tr>
@@ -217,6 +218,9 @@ export default function DashboardClient({ initialBases, error, userEmail, userRo
                         </td>
                         <td className="px-4 py-3 hidden sm:table-cell text-stone-500 text-xs">
                           {base.rating_count > 0 ? `${base.rating.toFixed(1)} (${base.rating_count})` : '-'}
+                        </td>
+                        <td className="px-4 py-3 hidden sm:table-cell text-xs text-stone-400">
+                          {base.profiles?.name || <span className="text-stone-600">-</span>}
                         </td>
                         <td className="px-4 py-3 hidden sm:table-cell">
                           <a

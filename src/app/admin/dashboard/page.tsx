@@ -31,7 +31,7 @@ export default async function DashboardPage() {
 
   const { data: bases, error } = await supabase
     .from('bases')
-    .select('*')
+    .select('*, profiles:created_by ( name )')
     .order('created_at', { ascending: false })
 
   return (

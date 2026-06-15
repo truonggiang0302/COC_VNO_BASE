@@ -80,7 +80,13 @@ export default function BaseFormModal({ base, onClose, onSaved }: Props) {
     try {
       const imageUrl = await uploadImage()
 
-      const payload = { ...form, image_url: imageUrl }
+      // Lấy user hiện tại để gán created_by
+      const { data: { user: currentUser } } = await supabase.auth.getUser()
+      const payload = {
+        ...form,
+        image_url: imageUrl,
+        created_by: isNew ? (currentUser?.id ?? null) : undefined,
+      }
 
       if (isNew) {
         const { data, error } = await supabase.from('bases').insert(payload).select().single()

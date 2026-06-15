@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
-import { Shield, LogOut, User, Settings } from 'lucide-react'
+import { LogOut, User, Settings } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
 import type { UserRole } from '@/types'
 
@@ -21,46 +22,29 @@ export default function Header() {
 
   useEffect(() => {
     async function loadUser() {
-      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser()
-      if (authError) {
-        console.error('Header: Auth error', authError)
-        setLoading(false)
-        return
-      }
+      const { data: { user: authUser } } = await supabase.auth.getUser()
 
       if (!authUser) {
-        console.log('Header: No authenticated user')
         setLoading(false)
         return
       }
 
-      console.log('Header: Auth user found', authUser.email)
-
-      // Thử lấy profile, nếu lỗi RLS thì dùng role mặc định
       let role: UserRole = 'viewer'
+      let displayName = authUser.email ?? ''
 
-      try {
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', authUser.id)
-          .single()
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role, name')
+        .eq('id', authUser.id)
+        .single()
 
-        if (error) {
-          console.error('Header: Profile query error', error.message, error.code)
-          // Nếu lỗi RLS (401/403) hoặc profile không tồn tại, dùng mặc định
-        } else if (profile) {
-          console.log('Header: Profile found', profile)
-          role = profile.role as UserRole
-        } else {
-          console.log('Header: No profile row found')
-        }
-      } catch (e) {
-        console.error('Header: Unexpected error loading profile', e)
+      if (profile) {
+        role = profile.role as UserRole
+        if (profile.name) displayName = profile.name
       }
 
       setUser({
-        email: authUser.email ?? '',
+        email: displayName,
         role,
       })
       setLoading(false)
@@ -84,8 +68,14 @@ export default function Header() {
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
         {/* Logo */}
         <Link href="/" className="group flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full border border-gold-700 bg-gradient-to-b from-gold-600 to-gold-800 shadow-lg shadow-gold-900/50 transition-transform group-hover:scale-105">
-            <Shield className="h-5 w-5 text-stone-950" />
+          <div className="relative h-10 w-10 transition-transform group-hover:scale-105">
+            <Image
+              src="/logo_vno.png"
+              alt="CoC VNO Logo"
+              fill
+              className="object-contain"
+              priority
+            />
           </div>
           <div className="flex flex-col leading-none">
             <span className="gold-shimmer text-xl font-bold tracking-wide">

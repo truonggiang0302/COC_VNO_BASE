@@ -147,6 +147,14 @@ export default function BaseCard({ base }: BaseCardProps) {
           </span>
         </div>
 
+        {/* Author */}
+        <p className="text-xs text-stone-600">
+          <span className="text-stone-600">by </span>
+          <span className="font-medium text-stone-400">
+            {base.profiles?.name || 'Unknown'}
+          </span>
+        </p>
+
         {/* Description */}
         {base.description && (
           <p className="text-xs text-stone-500 line-clamp-2">{base.description}</p>

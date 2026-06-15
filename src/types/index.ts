@@ -17,7 +17,10 @@ export interface Base {
   downloads: number
   rating: number
   rating_count: number
+  created_by: string | null
   created_at: string
+  // Joined from profiles (optional, may not be present in all queries)
+  profiles?: { name: string } | null
 }
 
 export type UserRole = 'super_admin' | 'admin' | 'viewer'
@@ -25,6 +28,7 @@ export type UserRole = 'super_admin' | 'admin' | 'viewer'
 export interface Profile {
   id: string
   email: string
+  name: string
   role: UserRole
   created_at: string
 }

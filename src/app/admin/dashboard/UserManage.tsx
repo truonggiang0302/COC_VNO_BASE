@@ -26,6 +26,7 @@ export default function UserManage() {
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [newEmail, setNewEmail] = useState('')
   const [newPassword, setNewPassword] = useState('')
+  const [newName, setNewName] = useState('')
   const [newRole, setNewRole] = useState<UserRole>('viewer')
   const [creating, setCreating] = useState(false)
 
@@ -56,6 +57,11 @@ export default function UserManage() {
       return
     }
 
+    if (!newName.trim()) {
+      toast.error('Vui lòng nhập tên hiển thị')
+      return
+    }
+
     if (newPassword.length < 6) {
       toast.error('Mật khẩu phải có ít nhất 6 ký tự')
       return
@@ -69,6 +75,7 @@ export default function UserManage() {
       body: JSON.stringify({
         email: newEmail.trim(),
         password: newPassword,
+        name: newName.trim(),
         role: newRole,
       }),
     })
@@ -81,9 +88,10 @@ export default function UserManage() {
       return
     }
 
-    toast.success(`Đã tạo user "${newEmail.trim()}" thành công!`)
+    toast.success(`Đã tạo user "${newName.trim()}" thành công!`)
     setNewEmail('')
     setNewPassword('')
+    setNewName('')
     setNewRole('viewer')
     setShowCreateForm(false)
     setCreating(false)
@@ -146,6 +154,17 @@ export default function UserManage() {
               />
             </div>
             <div>
+              <label className="mb-1 block text-[10px] uppercase tracking-wider text-stone-500">Tên hiển thị</label>
+              <input
+                type="text"
+                required
+                value={newName}
+                onChange={e => setNewName(e.target.value)}
+                placeholder="VD: Nguyễn Văn A"
+                className="coc-input w-full rounded-md px-3 py-2 text-sm"
+              />
+            </div>
+            <div>
               <label className="mb-1 block text-[10px] uppercase tracking-wider text-stone-500">Mật khẩu</label>
               <input
                 type="password"
@@ -199,6 +218,7 @@ export default function UserManage() {
             <thead>
               <tr className="border-b border-stone-750 bg-stone-950/30">
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-stone-500">Email</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-stone-500">Tên</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-stone-500">Vai trò</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-stone-500 hidden sm:table-cell">Ngày tạo</th>
                 <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-stone-500">Thao tác</th>
@@ -207,13 +227,13 @@ export default function UserManage() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={4} className="py-12 text-center text-stone-500">
+                  <td colSpan={5} className="py-12 text-center text-stone-500">
                     <Loader2 className="mx-auto h-5 w-5 animate-spin" />
                   </td>
                 </tr>
               ) : users.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="py-12 text-center text-stone-500">
+                  <td colSpan={5} className="py-12 text-center text-stone-500">
                     Chưa có người dùng nào
                   </td>
                 </tr>
@@ -227,6 +247,9 @@ export default function UserManage() {
                     )}
                   >
                     <td className="px-4 py-3 font-medium text-stone-200">{user.email}</td>
+                    <td className="px-4 py-3 text-stone-300 text-xs">
+                      {user.name || <span className="text-stone-600 italic">Chưa có tên</span>}
+                    </td>
                     <td className="px-4 py-3">
                       <span className={cn('rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase', ROLE_COLORS[user.role])}>
                         {ROLE_LABELS[user.role]}

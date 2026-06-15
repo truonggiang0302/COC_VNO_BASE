@@ -12,7 +12,7 @@ export default async function BaseGrid({ filters }: BaseGridProps) {
 
   let query = supabase
     .from('bases')
-    .select('*')
+    .select('*, profiles:created_by ( name )')
     .order('created_at', { ascending: false })
 
   if (filters.search) {
