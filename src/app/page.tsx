@@ -36,13 +36,13 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         </div>
 
         <div className="relative mx-auto max-w-7xl px-4 py-16 text-center sm:py-20">
-          <div className="mx-auto mb-6">
+          <div className="mx-auto mb-6 flex justify-center">
             <Image
               src="/logo_vno.png"
               alt="VNO Logo"
               width={500}
               height={270}
-              className="w-[300px] h-auto drop-shadow-2xl transition-transform hover:scale-105 duration-300"
+              className="w-full max-w-[500px] h-auto drop-shadow-2xl transition-transform hover:scale-105 duration-300"
               priority
             />
           </div>
