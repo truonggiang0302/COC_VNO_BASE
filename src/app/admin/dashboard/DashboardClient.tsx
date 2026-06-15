@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
-import { Plus, LogOut, Shield, Pencil, Trash2, ExternalLink, Download, Star, UserCog, LayoutGrid } from 'lucide-react'
+import { Plus, LogOut, Shield, Pencil, Trash2, ExternalLink, Download, Star, UserCog, LayoutGrid, Home } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
 import type { Base, UserRole } from '@/types'
 import { BASE_TYPE_COLORS } from '@/types'
@@ -84,6 +84,13 @@ export default function DashboardClient({ initialBases, error, userEmail, userRo
                 Thêm Base
               </button>
             )}
+            <a
+              href="/"
+              className="flex items-center gap-1.5 rounded-md border border-stone-750 px-3 py-2 text-sm text-stone-400 hover:border-gold-700 hover:text-gold-400 transition-colors"
+            >
+              <Home className="h-4 w-4" />
+              <span className="hidden sm:inline">Trang chủ</span>
+            </a>
             <button
               onClick={handleLogout}
               className="flex items-center gap-1.5 rounded-md border border-stone-750 px-3 py-2 text-sm text-stone-400 hover:border-red-800 hover:text-red-400 transition-colors"
