@@ -5,7 +5,7 @@ import toast from 'react-hot-toast'
 import { createClient } from '@/utils/supabase/client'
 import type { Profile, UserRole } from '@/types'
 import { cn } from '@/lib/cn'
-import { Shield, Loader2, UserPlus, UserCog } from 'lucide-react'
+import { Shield, Loader2, UserPlus, UserCog, Pencil, Check, X } from 'lucide-react'
 
 const ROLE_LABELS: Record<UserRole, string> = {
   super_admin: 'Super Admin',
@@ -29,6 +29,9 @@ export default function UserManage() {
   const [newName, setNewName] = useState('')
   const [newRole, setNewRole] = useState<UserRole>('viewer')
   const [creating, setCreating] = useState(false)
+  const [editingName, setEditingName] = useState<string | null>(null)
+  const [editingNameValue, setEditingNameValue] = useState('')
+  const [savingName, setSavingName] = useState(false)
 
   const loadUsers = async () => {
     setLoading(true)
@@ -43,6 +46,42 @@ export default function UserManage() {
       setUsers(data as Profile[])
     }
     setLoading(false)
+  }
+
+  const handleStartEditName = (user: Profile) => {
+    setEditingName(user.id)
+    setEditingNameValue(user.name || '')
+  }
+
+  const handleCancelEditName = () => {
+    setEditingName(null)
+    setEditingNameValue('')
+  }
+
+  const handleSaveName = async (userId: string) => {
+    if (!editingNameValue.trim()) {
+      toast.error('Tên không được để trống')
+      return
+    }
+
+    setSavingName(true)
+    const res = await fetch('/api/admin/update-profile', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, name: editingNameValue.trim() }),
+    })
+
+    const data = await res.json()
+
+    if (!res.ok) {
+      toast.error('Cập nhật tên thất bại: ' + data.error)
+    } else {
+      toast.success('Đã cập nhật tên!')
+      setEditingName(null)
+      setEditingNameValue('')
+      loadUsers()
+    }
+    setSavingName(false)
   }
 
   useEffect(() => {
@@ -246,9 +285,48 @@ export default function UserManage() {
                       idx % 2 === 0 ? '' : 'bg-stone-950/20',
                     )}
                   >
-                    <td className="px-4 py-3 font-medium text-stone-200">{user.email}</td>
+                    <td className="px-4 py-3 font-medium text-stone-200 max-w-[200px] truncate">
+                      {user.email}
+                    </td>
                     <td className="px-4 py-3 text-stone-300 text-xs">
-                      {user.name || <span className="text-stone-600 italic">Chưa có tên</span>}
+                      {editingName === user.id ? (
+                        <div className="flex items-center gap-1">
+                          <input
+                            type="text"
+                            value={editingNameValue}
+                            onChange={e => setEditingNameValue(e.target.value)}
+                            className="coc-input w-full rounded px-1.5 py-1 text-xs"
+                            autoFocus
+                            onKeyDown={e => {
+                              if (e.key === 'Enter') handleSaveName(user.id)
+                              if (e.key === 'Escape') handleCancelEditName()
+                            }}
+                          />
+                          <button
+                            onClick={() => handleSaveName(user.id)}
+                            disabled={savingName}
+                            className="text-army-400 hover:text-army-300 transition-colors"
+                          >
+                            <Check className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            onClick={handleCancelEditName}
+                            className="text-stone-500 hover:text-stone-300 transition-colors"
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1.5">
+                          <span>{user.name || <span className="text-stone-600 italic">Chưa có tên</span>}</span>
+                          <button
+                            onClick={() => handleStartEditName(user)}
+                            className="text-stone-600 hover:text-gold-400 transition-colors opacity-0 group-hover:opacity-100"
+                          >
+                            <Pencil className="h-3 w-3" />
+                          </button>
+                        </div>
+                      )}
                     </td>
                     <td className="px-4 py-3">
                       <span className={cn('rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase', ROLE_COLORS[user.role])}>
