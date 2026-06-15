@@ -36,20 +36,16 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         </div>
 
         <div className="relative mx-auto max-w-7xl px-4 py-16 text-center sm:py-20">
-          <div className="mx-auto mb-6 flex h-40 w-40 items-center justify-center">
-            <div className="relative h-40 w-40 transition-transform hover:scale-110 duration-300">
-              <Image
-                src="/logo_vno.png"
-                alt="CoC VNO Logo"
-                fill
-                className="object-contain drop-shadow-2xl"
-                priority
-              />
-            </div>
+          <div className="mx-auto mb-6">
+            <Image
+              src="/logo_vno.png"
+              alt="VNO Logo"
+              width={500}
+              height={270}
+              className="w-[300px] h-auto drop-shadow-2xl transition-transform hover:scale-105 duration-300"
+              priority
+            />
           </div>
-          <h1 className="gold-shimmer mb-4 font-display text-5xl font-bold tracking-tight sm:text-6xl">
-            VietNamOnline
-          </h1>
         </div>
 
         {/* Bottom gradient line */}
