@@ -79,7 +79,7 @@ export default function Header() {
           </div>
           <div className="flex flex-col leading-none">
             <span className="gold-shimmer text-xl font-bold tracking-wide">
-              CoC VNO
+              VietNamOnline
             </span>
             <span className="text-xs text-stone-400 tracking-widest uppercase">
               Clash of Clans
