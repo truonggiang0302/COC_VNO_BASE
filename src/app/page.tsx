@@ -36,8 +36,8 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         </div>
 
         <div className="relative mx-auto max-w-7xl px-4 py-16 text-center sm:py-20">
-          <div className="mx-auto mb-6 flex h-28 w-28 items-center justify-center">
-            <div className="relative h-28 w-28 transition-transform hover:scale-110 duration-300">
+          <div className="mx-auto mb-6 flex h-40 w-40 items-center justify-center">
+            <div className="relative h-40 w-40 transition-transform hover:scale-110 duration-300">
               <Image
                 src="/logo_vno.png"
                 alt="CoC VNO Logo"
@@ -48,13 +48,8 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             </div>
           </div>
           <h1 className="gold-shimmer mb-4 font-display text-5xl font-bold tracking-tight sm:text-6xl">
-            COC VNO
+            VietNamOnline
           </h1>
-          <p className="mx-auto max-w-2xl text-base text-stone-400 sm:text-lg">
-            Kho base layout dành cho cộng đồng Clash of Clans VietNamOnline.
-            <br />
-            Tìm kiếm, khám phá và chia sẻ những base mạnh nhất.
-          </p>
         </div>
 
         {/* Bottom gradient line */}
