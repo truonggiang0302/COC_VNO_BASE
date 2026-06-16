@@ -20,6 +20,13 @@ const ROLE_RING: Record<ClanRole, string> = {
   member: 'ring-2 ring-stone-500/30',
 }
 
+const ROLE_LABELS: Record<ClanRole, string> = {
+  leader: 'Thủ Lĩnh',
+  co_leader: 'Đồng Thủ Lĩnh',
+  elder: 'Huynh Trưởng',
+  member: 'Thành Viên',
+}
+
 export default function ClanMemberSlider() {
   const [members, setMembers] = useState<ClanMember[]>([])
   const [loading, setLoading] = useState(true)
@@ -28,9 +35,12 @@ export default function ClanMemberSlider() {
 
   useEffect(() => {
     fetch('/api/admin/clan-members')
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) return null
+        return res.json()
+      })
       .then(data => {
-        if (Array.isArray(data)) {
+        if (Array.isArray(data) && data.length > 0) {
           setMembers(data)
           setCenterIndex(Math.floor(data.length / 2))
         }
@@ -105,16 +115,12 @@ export default function ClanMemberSlider() {
 
             const translateY = absOff === 0 ? 0 : absOff === 1 ? 16 : 32
 
-            const scale = isCenter ? 'scale-100' : absOff === 1 ? 'scale-[0.85]' : 'scale-[0.7]'
-
-            const opacity = isCenter ? 'opacity-100' : absOff === 1 ? 'opacity-70' : 'opacity-40'
-
             return (
               <div
                 key={`${member.id}-${offset}`}
                 className="flex flex-col items-center transition-all duration-500 ease-out"
                 style={{
-                  transform: `translateY(${translateY}px) ${scale}`,
+                  transform: `translateY(${translateY}px) scale(${isCenter ? 1 : absOff === 1 ? 0.85 : 0.7})`,
                   opacity: isCenter ? 1 : absOff === 1 ? 0.7 : 0.4,
                 }}
               >
@@ -130,6 +136,7 @@ export default function ClanMemberSlider() {
                     fill
                     className="object-cover"
                     sizes="(max-width: 640px) 64px, 144px"
+                    unoptimized
                   />
                 </div>
 
@@ -172,11 +179,4 @@ export default function ClanMemberSlider() {
       </div>
     </div>
   )
-}
-
-const ROLE_LABELS: Record<ClanRole, string> = {
-  leader: 'Thủ Lĩnh',
-  co_leader: 'Đồng Thủ Lĩnh',
-  elder: 'Huynh Trưởng',
-  member: 'Thành Viên',
 }
