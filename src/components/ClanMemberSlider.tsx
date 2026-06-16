@@ -61,11 +61,10 @@ export default function ClanMemberSlider() {
 
   const getVisibleIndices = () => {
     const len = members.length
+    if (len === 0) return []
     const indices: { idx: number; offset: number }[] = []
     for (let offset = -2; offset <= 2; offset++) {
-      let idx = centerIndex + offset
-      if (idx < 0) idx += len
-      if (idx >= len) idx -= len
+      const idx = ((centerIndex + offset) % len + len) % len
       indices.push({ idx, offset })
     }
     return indices
@@ -108,6 +107,7 @@ export default function ClanMemberSlider() {
         <div className="flex items-center justify-center gap-2 sm:gap-4">
           {visible.map(({ idx, offset }) => {
             const member = members[idx]
+            if (!member) return null
             const absOff = Math.abs(offset)
             const isCenter = offset === 0
 
