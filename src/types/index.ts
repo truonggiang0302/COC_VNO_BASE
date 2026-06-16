@@ -50,6 +50,24 @@ export const BASE_TYPES: BaseType[] = [
 
 export const TOWNHALL_LEVELS = Array.from({ length: 10 }, (_, i) => i + 9) // 9..18
 
+export type ClanRole = 'leader' | 'co_leader' | 'elder' | 'member'
+
+export interface ClanMember {
+  id: string
+  name: string
+  role: ClanRole
+  image_url: string
+  display_order: number
+  created_at: string
+}
+
+export const CLAN_ROLE_LABELS: Record<ClanRole, string> = {
+  leader: 'Thủ Lĩnh',
+  co_leader: 'Đồng Thủ Lĩnh',
+  elder: 'Huynh Trưởng',
+  member: 'Thành Viên',
+}
+
 export const BASE_TYPE_COLORS: Record<BaseType, string> = {
   'Farming':    'bg-army-700 text-army-400 border border-army-600',
   'War':        'bg-red-950 text-red-400 border border-red-800',

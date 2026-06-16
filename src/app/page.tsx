@@ -5,6 +5,7 @@ import Header from '@/components/Header'
 import FilterBar from '@/components/FilterBar'
 import BaseGrid from '@/components/BaseGrid'
 import BaseGridSkeleton from '@/components/BaseGridSkeleton'
+import ClanMemberSlider from '@/components/ClanMemberSlider'
 import { Search, Shield } from 'lucide-react'
 
 interface HomePageProps {
@@ -54,6 +55,9 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
       {/* Main Content */}
       <main className="mx-auto max-w-7xl px-4 py-8">
+        {/* Clan Member Slider */}
+        <ClanMemberSlider />
+
         {/* Filter Panel */}
         <div className="mb-8 rounded-2xl border border-stone-750 bg-gradient-to-b from-[#1a1612] to-[#161310] p-6 shadow-xl shadow-black/20">
           <FilterBar />

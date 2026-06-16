@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
-import { Plus, LogOut, Shield, Pencil, Trash2, ExternalLink, Download, Star, UserCog, LayoutGrid, Home } from 'lucide-react'
+import { Plus, LogOut, Shield, Pencil, Trash2, ExternalLink, Download, Star, UserCog, LayoutGrid, Home, Users } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
 import type { Base, UserRole } from '@/types'
 import { BASE_TYPE_COLORS } from '@/types'
@@ -11,6 +11,7 @@ import { cn } from '@/lib/cn'
 import BaseFormModal from './BaseFormModal'
 import DeleteConfirmModal from './DeleteConfirmModal'
 import UserManage from './UserManage'
+import ClanManage from './ClanManage'
 
 interface Props {
   initialBases: Base[]
@@ -19,7 +20,7 @@ interface Props {
   userRole: UserRole
 }
 
-type Tab = 'bases' | 'users'
+type Tab = 'bases' | 'users' | 'clan'
 
 export default function DashboardClient({ initialBases, error, userEmail, userRole }: Props) {
   const router = useRouter()
@@ -138,6 +139,18 @@ export default function DashboardClient({ initialBases, error, userEmail, userRo
               Quản lý User
             </button>
           )}
+          <button
+            onClick={() => setActiveTab('clan')}
+            className={cn(
+              'flex items-center gap-2 rounded-md px-4 py-2 text-xs font-semibold transition-colors',
+              activeTab === 'clan'
+                ? 'bg-gold-800/40 text-gold-400'
+                : 'text-stone-500 hover:text-stone-300',
+            )}
+          >
+            <Users className="h-3.5 w-3.5" />
+            Quản lý Clan
+          </button>
         </div>
 
         {/* Tab content */}
@@ -264,6 +277,7 @@ export default function DashboardClient({ initialBases, error, userEmail, userRo
         )}
 
         {activeTab === 'users' && isSuperAdmin && <UserManage />}
+        {activeTab === 'clan' && <ClanManage />}
       </main>
 
       {/* Modals */}

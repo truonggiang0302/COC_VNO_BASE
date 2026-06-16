@@ -3,7 +3,7 @@ import { Toaster } from 'react-hot-toast'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'CoC Base Hub – Clash of Clans Base Links',
+  title: 'VietNamOnline',
   description:
     'Tổng hợp và chia sẻ base layout Clash of Clans theo Town Hall, chiến thuật Farming, War, Trophy và nhiều hơn nữa.',
   openGraph: {
