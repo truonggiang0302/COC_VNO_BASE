@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
-import { Search, ChevronDown, X, Filter, Target, Sword, Shield, Star, Zap, Crosshair } from 'lucide-react'
+import { Search, ChevronDown, X, Filter, Target, Sword, Shield, Star, Zap, Crosshair, Smile, Crown } from 'lucide-react'
 import { BASE_TYPES, TOWNHALL_LEVELS, type BaseType } from '@/types'
 import { cn } from '@/lib/cn'
 
@@ -13,6 +13,8 @@ const TYPE_ICONS: Record<BaseType, React.ReactNode> = {
   'Hybrid': <Zap className="h-5 w-5" />,
   'Anti 2 Star': <Crosshair className="h-5 w-5" />,
   'Anti 3 Star': <Target className="h-5 w-5" />,
+  'Funny': <Smile className="h-5 w-5" />,
+  'CWL': <Crown className="h-5 w-5" />,
 }
 
 const TYPE_BG: Record<BaseType, string> = {
@@ -22,6 +24,8 @@ const TYPE_BG: Record<BaseType, string> = {
   'Hybrid':     'from-purple-950/60 to-purple-950/30 border-purple-900 hover:border-purple-600',
   'Anti 2 Star':'from-blue-950/60 to-blue-950/30 border-blue-900 hover:border-blue-600',
   'Anti 3 Star':'from-orange-950/60 to-orange-950/30 border-orange-900 hover:border-orange-600',
+  'Funny':      'from-pink-950/60 to-pink-950/30 border-pink-900 hover:border-pink-600',
+  'CWL':        'from-cyan-950/60 to-cyan-950/30 border-cyan-900 hover:border-cyan-600',
 }
 
 const TYPE_TEXT: Record<BaseType, string> = {
@@ -31,6 +35,8 @@ const TYPE_TEXT: Record<BaseType, string> = {
   'Hybrid':     'text-purple-400',
   'Anti 2 Star':'text-blue-400',
   'Anti 3 Star':'text-orange-400',
+  'Funny':      'text-pink-400',
+  'CWL':        'text-cyan-400',
 }
 
 export default function FilterBar() {

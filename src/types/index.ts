@@ -5,6 +5,8 @@ export type BaseType =
   | 'Hybrid'
   | 'Anti 2 Star'
   | 'Anti 3 Star'
+  | 'Funny'
+  | 'CWL'
 
 export interface Base {
   id: string
@@ -46,6 +48,8 @@ export const BASE_TYPES: BaseType[] = [
   'Hybrid',
   'Anti 2 Star',
   'Anti 3 Star',
+  'Funny',
+  'CWL',
 ]
 
 export const TOWNHALL_LEVELS = Array.from({ length: 10 }, (_, i) => i + 9) // 9..18
@@ -75,4 +79,6 @@ export const BASE_TYPE_COLORS: Record<BaseType, string> = {
   'Hybrid':     'bg-purple-950 text-purple-400 border border-purple-800',
   'Anti 2 Star':'bg-blue-950 text-blue-400 border border-blue-800',
   'Anti 3 Star':'bg-orange-950 text-orange-400 border border-orange-800',
+  'Funny':      'bg-pink-950 text-pink-400 border border-pink-800',
+  'CWL':        'bg-cyan-950 text-cyan-400 border border-cyan-800',
 }

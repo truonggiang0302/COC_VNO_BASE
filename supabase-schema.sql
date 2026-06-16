@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS public.bases (
   name        TEXT NOT NULL,
   townhall    INTEGER NOT NULL CHECK (townhall BETWEEN 9 AND 18),
   base_type   TEXT NOT NULL CHECK (
-    base_type IN ('Farming', 'War', 'Trophy', 'Hybrid', 'Anti 2 Star', 'Anti 3 Star')
+    base_type IN ('Farming', 'War', 'Trophy', 'Hybrid', 'Anti 2 Star', 'Anti 3 Star', 'Funny', 'CWL')
   ),
   image_url   TEXT NOT NULL,
   base_link   TEXT NOT NULL,
