@@ -2,8 +2,9 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import toast from 'react-hot-toast'
-import { Shield, Loader2, Mail, ArrowLeft } from 'lucide-react'
+import { Loader2, Mail, ArrowLeft } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
 
 export default function ForgotPasswordForm() {
@@ -40,8 +41,15 @@ export default function ForgotPasswordForm() {
   if (sent) {
     return (
       <div className="stone-card rounded-2xl p-8 text-center">
-        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-army-600 bg-army-800/50">
-          <Mail className="h-7 w-7 text-army-400" />
+        <div className="mx-auto mb-4 flex h-24 w-24 items-center justify-center">
+          <Image
+            src="/logo_vno.png"
+            alt="VietNamOnline Logo"
+            width={200}
+            height={108}
+            className="w-full h-auto drop-shadow-2xl"
+            priority
+          />
         </div>
         <h1 className="mb-2 font-display text-xl font-bold text-stone-100">Đã gửi email!</h1>
         <p className="mb-6 text-sm text-stone-500">
@@ -62,8 +70,15 @@ export default function ForgotPasswordForm() {
     <div className="stone-card rounded-2xl p-8">
       {/* Logo */}
       <div className="mb-6 text-center">
-        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-gold-700 bg-gradient-to-b from-gold-600 to-gold-800 shadow-lg shadow-gold-900/50">
-          <Shield className="h-7 w-7 text-stone-950" />
+        <div className="mx-auto mb-4 flex h-24 w-24 items-center justify-center">
+          <Image
+            src="/logo_vno.png"
+            alt="VietNamOnline Logo"
+            width={200}
+            height={108}
+            className="w-full h-auto drop-shadow-2xl"
+            priority
+          />
         </div>
         <h1 className="gold-shimmer font-display text-2xl font-bold">Quên mật khẩu</h1>
         <p className="mt-1 text-sm text-stone-500">
