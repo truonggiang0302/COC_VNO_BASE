@@ -88,7 +88,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         <div className="mx-auto max-w-7xl px-4">
           <div className="mb-2 flex items-center justify-center gap-2">
             <Shield className="h-4 w-4 text-gold-600" />
-            <span className="text-gold-500 font-semibold">CoC VNO</span>
+            <span className="text-gold-500 font-semibold">VietNamOnline</span>
           </div>
           <p>© {new Date().getFullYear()} – Không liên kết với Supercell</p>
           <p className="mt-1">Clash of Clans là thương hiệu của Supercell Oy.</p>

@@ -51,7 +51,7 @@ export default function LoginForm() {
         <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-gold-700 bg-gradient-to-b from-gold-600 to-gold-800 shadow-lg shadow-gold-900/50">
           <Shield className="h-7 w-7 text-stone-950" />
         </div>
-        <h1 className="gold-shimmer font-display text-2xl font-bold">CoC VNO</h1>
+        <h1 className="gold-shimmer font-display text-2xl font-bold">VietNamOnline</h1>
         <p className="mt-1 text-sm text-stone-500">Đăng nhập để tiếp tục</p>
       </div>
 
