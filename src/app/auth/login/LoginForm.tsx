@@ -49,18 +49,17 @@ export default function LoginForm() {
     <div className="stone-card rounded-2xl p-8">
       {/* Logo */}
       <div className="mb-6 text-center">
-        <div className="mx-auto mb-4 flex h-24 w-24 items-center justify-center">
+        <div className="mx-auto mb-2 flex h-36 w-36 items-center justify-center">
           <Image
             src="/logo_vno.png"
-            alt="VietNamOnline Logo"
-            width={200}
-            height={108}
+            alt="VNO Logo"
+            width={280}
+            height={151}
             className="w-full h-auto drop-shadow-2xl"
             priority
           />
         </div>
-        <h1 className="gold-shimmer font-display text-2xl font-bold">VietNamOnline</h1>
-        <p className="mt-1 text-sm text-stone-500">Đăng nhập để tiếp tục</p>
+        <p className="text-sm text-stone-500">Đăng nhập để tiếp tục</p>
       </div>
 
       <form onSubmit={handleLogin} className="flex flex-col gap-4">
