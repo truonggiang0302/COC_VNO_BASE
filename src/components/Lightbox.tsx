@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
-import Image from 'next/image'
+import { createPortal } from 'react-dom'
 import { X, ZoomIn } from 'lucide-react'
 
 interface LightboxProps {
@@ -26,9 +26,13 @@ export default function Lightbox({ src, alt, caption, onClose }: LightboxProps) 
     }
   }, [onClose])
 
-  return (
+  // Render qua Portal ra <body> để không bị ảnh hưởng bởi transform của card cha
+  // (card có class hover:-translate-y-0.5 làm position:fixed sai tọa độ)
+  if (typeof document === 'undefined') return null
+
+  return createPortal(
     <div
-      className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/90 backdrop-blur-sm"
+      className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/95"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
@@ -42,23 +46,14 @@ export default function Lightbox({ src, alt, caption, onClose }: LightboxProps) 
         <X className="h-5 w-5" />
       </button>
 
-      {/* Ảnh phóng to */}
-      <div
-        className="relative mx-4 w-full max-w-5xl"
+      {/* Ảnh phóng to - dùng img thường để max-h/max-w hoạt động chính xác */}
+      <img
+        src={src}
+        alt={alt || 'Preview'}
+        className="max-h-[80vh] max-w-[92vw] object-contain"
         onClick={(e) => e.stopPropagation()}
-      >
-        <div className="relative aspect-[4/3] max-h-[85vh] w-full">
-          <Image
-            src={src}
-            alt={alt || 'Preview'}
-            fill
-            className="object-contain"
-            sizes="100vw"
-            unoptimized
-            priority
-          />
-        </div>
-      </div>
+        draggable={false}
+      />
 
       {/* Caption */}
       {caption && (
@@ -75,6 +70,7 @@ export default function Lightbox({ src, alt, caption, onClose }: LightboxProps) 
         <ZoomIn className="h-3 w-3" />
         Chạm ra ngoài để đóng
       </p>
-    </div>
+    </div>,
+    document.body,
   )
 }
