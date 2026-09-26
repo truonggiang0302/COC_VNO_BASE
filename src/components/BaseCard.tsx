@@ -3,10 +3,11 @@
 import Image from 'next/image'
 import { useState } from 'react'
 import toast from 'react-hot-toast'
-import { ExternalLink, Shield, Star, Download } from 'lucide-react'
+import { ExternalLink, Shield, Star, Download, ZoomIn } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
 import { type Base, BASE_TYPE_COLORS } from '@/types'
 import { cn } from '@/lib/cn'
+import Lightbox from './Lightbox'
 
 interface BaseCardProps {
   base: Base
@@ -15,6 +16,7 @@ interface BaseCardProps {
 export default function BaseCard({ base }: BaseCardProps) {
   const supabase = createClient()
   const [imgError, setImgError] = useState(false)
+  const [showLightbox, setShowLightbox] = useState(false)
   const [downloads, setDownloads] = useState(base.downloads)
   const [rating, setRating] = useState(base.rating)
   const [ratingCount, setRatingCount] = useState(base.rating_count)
@@ -59,8 +61,11 @@ export default function BaseCard({ base }: BaseCardProps) {
 
   return (
     <article className="stone-card group flex flex-col overflow-hidden rounded-xl transition-all duration-200 hover:-translate-y-0.5">
-      {/* Image */}
-      <div className="relative aspect-[4/3] w-full overflow-hidden bg-stone-900">
+      {/* Image - click để xem ảnh phóng to */}
+      <div
+        className="group/img relative aspect-[4/3] w-full cursor-zoom-in overflow-hidden bg-stone-900"
+        onClick={() => !imgError && setShowLightbox(true)}
+      >
         {!imgError ? (
           <Image
             src={base.image_url}
@@ -75,6 +80,14 @@ export default function BaseCard({ base }: BaseCardProps) {
             <Shield className="h-12 w-12 text-stone-700" />
           </div>
         )}
+
+        {/* Zoom hint overlay (hover desktop) */}
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition-all duration-200 group-hover/img:bg-black/30 group-hover/img:opacity-100">
+          <div className="flex items-center gap-1.5 rounded-full bg-stone-950/80 px-3 py-1.5 text-xs font-semibold text-gold-400 backdrop-blur-sm">
+            <ZoomIn className="h-3.5 w-3.5" />
+            Xem ảnh
+          </div>
+        </div>
 
         {/* TH Badge overlay */}
         <div className="absolute left-2 top-2 flex h-8 w-8 items-center justify-center rounded-full border border-gold-700 bg-stone-950/80 text-xs font-bold text-gold-400 backdrop-blur-sm">
@@ -171,6 +184,16 @@ export default function BaseCard({ base }: BaseCardProps) {
           </button>
         </div>
       </div>
+
+      {/* Lightbox - xem ảnh phóng to */}
+      {showLightbox && (
+        <Lightbox
+          src={base.image_url}
+          alt={`Base layout ${base.name}`}
+          caption={`${base.name} – TH ${base.townhall} – ${base.base_type}`}
+          onClose={() => setShowLightbox(false)}
+        />
+      )}
     </article>
   )
 }
