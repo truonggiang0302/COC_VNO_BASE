@@ -50,6 +50,20 @@ async function fetchTrendingPaths(): Promise<string[]> {
   return paths
 }
 
+/** Kiểm tra URL ảnh còn sống không (HEAD request, không cache) */
+async function isImageAlive(imageUrl: string): Promise<boolean> {
+  try {
+    const res = await fetch(imageUrl, {
+      method: 'HEAD',
+      cache: 'no-store',
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; CoCVNOBase/1.0)' },
+    })
+    return res.ok
+  } catch {
+    return false
+  }
+}
+
 /** Fetch + parse một trang chi tiết base */
 async function fetchBaseDetail(detailPath: string): Promise<TrendingBase | null> {
   try {
@@ -87,7 +101,9 @@ async function fetchBaseDetail(detailPath: string): Promise<TrendingBase | null>
     const classMatch = html.match(/Classification<\/[^>]+>\s*<[^>]+>([^<]+)</)
     const classification = classMatch ? decodeEntities(classMatch[1]) : undefined
 
+    // Bỏ qua base có ảnh chết (ClashFox đôi khi xóa file nhưng vẫn giữ trang)
     if (!imageUrl || !copyLink) return null
+    if (!(await isImageAlive(imageUrl))) return null
 
     return { detailPath, title, townhall, baseType, author, imageUrl, copyLink, classification }
   } catch {
