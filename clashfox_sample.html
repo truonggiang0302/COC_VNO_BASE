@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta name="google-adsense-account" content="ca-pub-9839706134990306" />
+    <!-- Web-only scripts (ads + analytics) - skip in native Capacitor app -->
+    <script data-cfasync="false">
+      (function(){
+        var isNative = window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
+        if (isNative) return;
+
+        var ADSENSE_PUBLISHER_ID = 'pub-9839706134990306';
+        window.__CF_AD_ENTITLEMENT__ = { resolved: false, isAdFree: true };
+
+        function isLocalHost() {
+          var host = String(window.location.hostname || '').toLowerCase();
+          return host === 'localhost' || host === '127.0.0.1' || host === '::1';
+        }
+
+        function canShowGoogleMessages() {
+          var entitlement = window.__CF_AD_ENTITLEMENT__ || {};
+          var policy = window.__CF_AD_POLICY__ || {};
+          return entitlement.resolved && !entitlement.isAdFree && policy.resolved && policy.adsAllowed;
+        }
+
+        function installGoogleControlledMessaging() {
+          window.googlefc = window.googlefc || {};
+          window.googlefc.controlledMessagingFunction = function(message) {
+            // ClashFox renders the recovery UI after the resolved entitlement
+            // check, so the Google fallback must not open a second dialog.
+            message.proceed(false);
+          };
+        }
+
+        function signalGoogleFcPresent() {
+          if (window.frames.googlefcPresent) return;
+          if (!document.body) {
+            window.setTimeout(signalGoogleFcPresent, 0);
+            return;
+          }
+          var iframe = document.createElement('iframe');
+          iframe.name = 'googlefcPresent';
+          iframe.style.cssText = 'display:none;width:0;height:0;border:0;position:absolute;left:-1000px;top:-1000px;';
+          document.body.appendChild(iframe);
+        }
+
+        function loadGoogleAdBlockRecovery() {
+          if (!canShowGoogleMessages() || isLocalHost()) return;
+          if (document.querySelector('script[data-clashfox-adblock-recovery]')) return;
+
+          installGoogleControlledMessaging();
+          var recoveryScript = document.createElement('script');
+          recoveryScript.async = true;
+          recoveryScript.dataset.clashfoxAdblockRecovery = 'true';
+          recoveryScript.src = 'https://fundingchoicesmessages.google.com/i/' + ADSENSE_PUBLISHER_ID + '?ers=1';
+          document.head.appendChild(recoveryScript);
+          signalGoogleFcPresent();
+        }
+
+        window.__CF_RESOLVE_AD_ENTITLEMENT__ = function(isAdFree) {
+          window.__CF_AD_ENTITLEMENT__ = {
+            resolved: true,
+            isAdFree: isAdFree === true
+          };
+
+          // Keep the fast next-page hint in sync with the authoritative
+          // entitlement. The hint never decides whether a Google message may
+          // appear; it only avoids unnecessary work before auth resolves.
+          try {
+            if (isAdFree === true) localStorage.setItem('cf_adfree', '1');
+            else localStorage.removeItem('cf_adfree');
+          } catch (e) {}
+
+          if (isAdFree) return;
+          installGoogleControlledMessaging();
+          loadGoogleAdBlockRecovery();
+        };
+
+        var GEO_CACHE_KEY = 'cf_geo_country_v1';
+        var GEO_CACHE_TS_KEY = 'cf_geo_country_ts_v1';
+        var GEO_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+
+        function normalizeCountryCode(countryCode) {
+          return String(countryCode || '').trim().toUpperCase();
+        }
+
+        function readEdgeCountryCode() {
+          try {
+            return normalizeCountryCode(window.__CF_EDGE_COUNTRY__ || '');
+          } catch (e) {
+            return '';
+          }
+        }
+
+        function shouldBlockAdsForCountry(countryCode) {
+          return normalizeCountryCode(countryCode) === 'BD';
+        }
+
+        function readCachedCountryCode() {
+          try {
+            var countryCode = normalizeCountryCode(localStorage.getItem(GEO_CACHE_KEY));
+            var ts = Number(localStorage.getItem(GEO_CACHE_TS_KEY) || '0');
+            if (!countryCode || !ts || (Date.now() - ts) > GEO_CACHE_TTL_MS) return '';
+            return countryCode;
+          } catch (e) {
+            return '';
+          }
+        }
+
+        function writeCachedCountryCode(countryCode) {
+          var normalized = normalizeCountryCode(countryCode);
+          if (!normalized) return;
+          try {
+            localStorage.setItem(GEO_CACHE_KEY, normalized);
+            localStorage.setItem(GEO_CACHE_TS_KEY, String(Date.now()));
+          } catch (e) {}
+        }
+
+        function publishAdPolicy(countryCode, resolved) {
+          var normalized = normalizeCountryCode(countryCode);
+          window.__CF_AD_POLICY__ = {
+            resolved: resolved !== false,
+            countryCode: normalized,
+            adsAllowed: !shouldBlockAdsForCountry(normalized)
+          };
+          try {
+            window.dispatchEvent(new CustomEvent('cf-ad-policy-ready', { detail: window.__CF_AD_POLICY__ }));
+          } catch (e) {}
+          loadGoogleAdBlockRecovery();
+          return window.__CF_AD_POLICY__;
+        }
+
+        function fetchCloudflareCountryCode() {
+          return fetch('/cdn-cgi/trace', {
+            cache: 'no-store',
+            headers: { 'Accept': 'text/plain' }
+          })
+            .then(function(res){
+              if (!res.ok) throw new Error('cf trace failed: ' + res.status);
+              return res.text();
+            })
+            .then(function(text){
+              var match = String(text || '').match(/(?:^|\n)loc=([A-Z]{2})(?:\n|$)/);
+              return normalizeCountryCode(match && match[1]);
+            });
+        }
+
+        function fetchIpApiCountryCode() {
+          return fetch('https://ipapi.co/json/', {
+            cache: 'no-store',
+            headers: { 'Accept': 'application/json' }
+          })
+            .then(function(res){
+              if (!res.ok) throw new Error('ipapi failed: ' + res.status);
+              return res.json();
+            })
+            .then(function(data){
+              return normalizeCountryCode(data && data.country_code);
+            });
+        }
+
+        function fetchIpWhoCountryCode() {
+          return fetch('https://ipwho.is/', {
+            cache: 'no-store',
+            headers: { 'Accept': 'application/json' }
+          })
+            .then(function(res){
+              if (!res.ok) throw new Error('ipwho failed: ' + res.status);
+              return res.json();
+            })
+            .then(function(data){
+              return normalizeCountryCode(data && data.country_code);
+            });
+        }
+
+        window.__CF_AD_POLICY__ = { resolved: false, countryCode: '', adsAllowed: false };
+
+        // Ad network policy - skip for ad-free subscribers and Bangladesh traffic.
+        // Existing AdSense and Ad.Plus authorizations remain in ads.txt. Visible
+        // ad placements are intentionally disabled during inventory review.
+        if (!localStorage.getItem('cf_adfree')) {
+          var edgeCountryCode = readEdgeCountryCode();
+          if (edgeCountryCode) {
+            writeCachedCountryCode(edgeCountryCode);
+            publishAdPolicy(edgeCountryCode, true);
+          } else {
+            var cachedCountryCode = readCachedCountryCode();
+            if (cachedCountryCode) {
+              publishAdPolicy(cachedCountryCode, true);
+            } else {
+              fetchCloudflareCountryCode()
+                .catch(fetchIpApiCountryCode)
+                .catch(fetchIpWhoCountryCode)
+                .then(function(countryCode){
+                  var normalized = normalizeCountryCode(countryCode);
+                  if (!normalized) throw new Error('country unresolved');
+                  writeCachedCountryCode(normalized);
+                  publishAdPolicy(normalized, true);
+                })
+                .catch(function(){
+                  publishAdPolicy('', true);
+                });
+            }
+          }
+        } else {
+          publishAdPolicy('', true);
+        }
+
+        // Consent Mode defaults must be set before any Google tag loads.
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        window.gtag = gtag;
+        gtag('consent', 'default', {
+          ad_storage: 'denied',
+          ad_user_data: 'denied',
+          ad_personalization: 'denied',
+          analytics_storage: 'granted',
+          wait_for_update: 500
+        });
+
+        // Google Analytics runs in consent-aware mode. A certified CMP updates
+        // these states after the visitor makes a choice.
+        var s2=document.createElement('script');s2.async=true;s2.src='https://www.googletagmanager.com/gtag/js?id=G-0MPJ74RBT1';document.head.appendChild(s2);
+        gtag('js', new Date());
+        gtag('config', 'G-0MPJ74RBT1');
+
+      })();
+    </script>
+    
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script>
+      document.documentElement.classList.add('cf-js');
+    </script>
+    <style>html.cf-js #seo-prerender{display:none!important}</style>
+    <noscript><style>#seo-prerender{display:none!important}.cf-noscript{max-width:32rem;margin:12vh auto;padding:1.5rem;color:#fff;font-family:Arial,sans-serif;text-align:center}</style></noscript>
+    
+    <meta name="generator" content="ClashFox Export (Vite)" />
+
+    <!-- SEO_HEAD_START: replaced per route by tools/prerender-seo.mjs -->
+    <title>Town Hall 18 War Base by Base Pro (1b1d73) – Copy Link | ClashFox</title>
+    <meta name="title" content="Town Hall 18 War Base by Base Pro (1b1d73) – Copy Link | ClashFox" />
+    <meta name="description" content="Copy this published Town Hall 18 war base layout and review its source details on ClashFox. Catalog 1b1d73, verified 2026-09-22 with its original source." data-react-helmet="true" />
+    <meta name="robots" content="index,follow,max-image-preview:large" data-react-helmet="true" />
+    <meta name="author" content="ClashFox" />
+    <meta name="theme-color" content="#fcfaf7" />
+    <link rel="canonical" href="https://clashfox.com/base/th18/base-pro-656fb6c9fd1b1d73" data-react-helmet="true" />
+    <meta property="og:type" content="website" data-react-helmet="true" />
+    <meta property="og:url" content="https://clashfox.com/base/th18/base-pro-656fb6c9fd1b1d73" data-react-helmet="true" />
+    <meta property="og:title" content="Town Hall 18 War Base by Base Pro (1b1d73) – Copy Link | ClashFox" data-react-helmet="true" />
+    <meta property="og:description" content="Copy this published Town Hall 18 war base layout and review its source details on ClashFox. Catalog 1b1d73, verified 2026-09-22 with its original source." data-react-helmet="true" />
+    <meta property="og:image" content="https://clashfox.com/og-cover.jpg" data-react-helmet="true" />
+    <meta property="og:image:width" content="1200" data-react-helmet="true" />
+    <meta property="og:image:height" content="630" data-react-helmet="true" />
+    <meta property="og:site_name" content="ClashFox" data-react-helmet="true" />
+    <meta property="og:locale" content="en_US" data-react-helmet="true" />
+    <meta name="twitter:card" content="summary_large_image" data-react-helmet="true" />
+    <meta name="twitter:url" content="https://clashfox.com/base/th18/base-pro-656fb6c9fd1b1d73" data-react-helmet="true" />
+    <meta name="twitter:title" content="Town Hall 18 War Base by Base Pro (1b1d73) – Copy Link | ClashFox" data-react-helmet="true" />
+    <meta name="twitter:description" content="Copy this published Town Hall 18 war base layout and review its source details on ClashFox. Catalog 1b1d73, verified 2026-09-22 with its original source." data-react-helmet="true" />
+    <meta name="twitter:image" content="https://clashfox.com/og-cover.jpg" data-react-helmet="true" />
+    <!-- SEO_HEAD_END -->
+    
+    <!-- Favicon - Multiple sizes for Google -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/web-app-manifest-192x192.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/web-app-manifest-512x512.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    
+    <!-- Web App Manifest -->
+    <link rel="manifest" href="/site.webmanifest" />
+        
+    <!-- Google Fonts (non-blocking) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" media="print" onload="this.media='all'" />
+    
+    <!-- Preload Critical Fonts -->
+    <link rel="preload" href="/fonts/clash_regular.otf" as="font" type="font/otf" crossorigin />
+    
+    <!-- Preload Critical Images (only homepage assets) -->
+    <link rel="preload" href="/logo1.png" as="image" type="image/png" fetchpriority="high" />
+<script type="module" crossorigin src="/assets/index-ecdff637-202609241445.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/i18n-e6dcbc9a-202609241445.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-react-0643c7f5-202609241445.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-ui-afbadfdf-202609241445.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-capacitor-6fac81c0-202609241445.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-icons-43cfcdfc-202609241445.js">
+    <link rel="stylesheet" href="/assets/index-2110315f.css">
+  </head>
+  <body>
+    <div id="root"><main id="seo-prerender" data-route="/base/th18/base-pro-656fb6c9fd1b1d73">
+      <header><a href="/" aria-label="ClashFox home">ClashFox</a></header>
+      <article>
+        <nav aria-label="Breadcrumb"><ol><li><a href="/">ClashFox</a></li><li><a href="/bases">Base Layouts</a></li><li><a href="/daily-bases/th18">Town Hall 18 Bases</a></li><li><span aria-current="page">Town Hall 18 War Base by Base Pro (1b1d73)</span></li></ol></nav>
+        <h1>Town Hall 18 War Base by Base Pro (1b1d73)</h1>
+        <p>Copy this published Town Hall 18 war base layout and review its source details on ClashFox. Catalog 1b1d73 was verified 2026-09-22 with creator attribution and source details.</p>
+        <figure><img src="/weekly_bases/th18/th18_20260922_144644_dce9ca7f_thumb.webp" alt="Town Hall 18 War Base by Base Pro (1b1d73) layout preview" width="960" height="540" loading="eager"><figcaption>Verified 2026-09-22 · Creator: Base Pro</figcaption></figure>
+      <section><h2>Layout facts</h2><dl><dt>Town Hall</dt><dd>TH18</dd><dt>Catalog ID</dt><dd>656fb6c9fd1b1d73</dd><dt>Classification</dt><dd>anti3, s2w</dd></dl>
+      <p><a href="https://link.clashofclans.com/en?action=OpenLayout&amp;id=TH18%3AWB%3AAAAAPwAAAAJeJNgFPkesqgMoNSCTSemV" rel="nofollow noopener">Copy this base in Clash of Clans</a> · <a href="https://www.youtube.com/watch?v=Jtf0NZZC9sY" rel="noopener">View original source</a></p></section>
+      <section><h2>About this layout</h2><p>This permanent catalog record keeps the in-game layout link, preview, creator attribution and source date together so players can inspect the design before copying it.</p><p>The record is published only after its link, stable ID, preview availability and image uniqueness pass the ClashFox quality gate. If the game publisher later changes a copy link, the source and catalog ID keep corrections traceable.</p></section>
+        <nav aria-label="Related ClashFox pages"><ul><li><a href="/daily-bases/th18">More Town Hall 18 bases</a></li><li><a href="/about">About ClashFox</a></li></ul></nav>
+        
+      </article>
+      <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Town Hall 18 War Base by Base Pro (1b1d73) – Copy Link | ClashFox","description":"Copy this published Town Hall 18 war base layout and review its source details on ClashFox. Catalog 1b1d73, verified 2026-09-22 with its original source.","url":"https://clashfox.com/base/th18/base-pro-656fb6c9fd1b1d73","isPartOf":{"@type":"WebSite","name":"ClashFox","url":"https://clashfox.com/"},"breadcrumb":{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"ClashFox","item":"https://clashfox.com/"},{"@type":"ListItem","position":2,"name":"Base Layouts","item":"https://clashfox.com/bases"},{"@type":"ListItem","position":3,"name":"Town Hall 18 Bases","item":"https://clashfox.com/daily-bases/th18"},{"@type":"ListItem","position":4,"name":"Town Hall 18 War Base by Base Pro (1b1d73)","item":"https://clashfox.com/base/th18/base-pro-656fb6c9fd1b1d73"}]},"mainEntity":{"@type":"CreativeWork","identifier":"656fb6c9fd1b1d73","name":"Town Hall 18 War Base by Base Pro (1b1d73)","image":{"@type":"ImageObject","url":"https://clashfox.com/weekly_bases/th18/th18_20260922_144644_dce9ca7f_thumb.webp","width":960,"height":540},"creator":{"@type":"Person","name":"Base Pro"},"datePublished":"2026-09-22","sameAs":"https://www.youtube.com/watch?v=Jtf0NZZC9sY"}}</script>
+    </main></div>
+    <noscript><div class="cf-noscript">ClashFox requires JavaScript to run. Please enable JavaScript and reload the page.</div></noscript>
+    <!-- Paddle.js v2 -->
+    <script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
+    
+  <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"600c6598e2e646b9b12c72ebae07973f","r":1,"spa":2}' crossorigin="anonymous"></script>
+</body>
+</html>
