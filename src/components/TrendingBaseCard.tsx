@@ -74,11 +74,18 @@ export default function TrendingBaseCard({ base }: TrendingBaseCardProps) {
         {/* Actions */}
         <div className="mt-auto flex gap-2 pt-2">
           <button
-            onClick={handleCopy}
+            onClick={() => window.open(base.copyLink, '_blank', 'noopener,noreferrer')}
             className="btn-gold flex flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-2 text-xs font-semibold transition-all"
           >
+            <ExternalLink className="h-3.5 w-3.5" />
+            Mở
+          </button>
+          <button
+            onClick={handleCopy}
+            className="flex items-center justify-center rounded-md border border-stone-750 px-3 py-2 text-xs text-stone-400 transition-colors hover:border-gold-700 hover:text-gold-400"
+            title="Copy link base"
+          >
             <Copy className="h-3.5 w-3.5" />
-            Copy Link
           </button>
           <a
             href={`https://clashfox.com${base.detailPath}`}

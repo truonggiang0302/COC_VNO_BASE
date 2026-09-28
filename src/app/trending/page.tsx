@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { Flame, RefreshCw } from 'lucide-react'
 import { getTrendingBases } from '@/lib/clashfox'
 import TrendingBaseCard from '@/components/TrendingBaseCard'
+import Header from '@/components/Header'
 
 export const metadata: Metadata = {
   title: 'Trending Bases | CoC VNO Base Hub',
@@ -27,6 +28,7 @@ export default async function TrendingPage() {
 
   return (
     <main className="min-h-screen bg-stone-950">
+      <Header />
       <div className="mx-auto max-w-7xl px-4 py-8">
         {/* Page header */}
         <div className="mb-8 flex flex-col gap-2">
