@@ -5,7 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
-import { LogOut, User, Settings } from 'lucide-react'
+import { LogOut, User, Settings, Flame } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
 import type { UserRole } from '@/types'
 
@@ -93,6 +93,14 @@ export default function Header() {
             <div className="h-8 w-20 animate-pulse rounded-md bg-stone-800" />
           ) : user ? (
             <>
+              {/* Trending link - hiển thị cho mọi user đã login */}
+              <Link
+                href="/trending"
+                className="flex items-center gap-1.5 rounded-md border border-stone-750 bg-stone-850 px-3 py-1.5 text-sm text-stone-400 transition-colors hover:border-gold-700 hover:text-gold-400"
+              >
+                <Flame className="h-3.5 w-3.5" />
+                Trending
+              </Link>
               {/* Admin link - chỉ hiển thị với admin/super_admin */}
               {(user.role === 'admin' || user.role === 'super_admin') && (
                 <Link
