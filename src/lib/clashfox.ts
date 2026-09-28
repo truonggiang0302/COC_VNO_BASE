@@ -50,14 +50,21 @@ async function fetchTrendingPaths(): Promise<string[]> {
   return paths
 }
 
-/** Kiểm tra URL ảnh còn sống không (HEAD request, không cache) */
+/**
+ * Kiểm tra URL ảnh còn sống không.
+ * LƯU Ý: ClashFox không hỗ trợ HEAD (trả 502) → dùng GET với Range 100 byte đầu.
+ */
 async function isImageAlive(imageUrl: string): Promise<boolean> {
   try {
     const res = await fetch(imageUrl, {
-      method: 'HEAD',
-      cache: 'no-store',
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; CoCVNOBase/1.0)' },
+      method: 'GET',
+      next: { revalidate: REVALIDATE },
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; CoCVNOBase/1.0)',
+        Range: 'bytes=0-99',
+      },
     })
+    // 200 hoặc 206 (Partial Content) = ảnh còn sống
     return res.ok
   } catch {
     return false
