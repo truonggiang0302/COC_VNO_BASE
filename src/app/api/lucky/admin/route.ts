@@ -26,7 +26,8 @@ function findWinners(picks: WinnerPick[], winningNumber: number) {
   const topDistances = distances.slice(0, 2) // 2 khoảng cách nhỏ nhất (trùng nhau chỉ tính 1)
   const winners = picks
     .filter((p) => topDistances.includes(Math.abs(p.number - winningNumber)))
-    .sort((a, b) => Math.abs(a.number - winningNumber) - Math.abs(b.number - winningNumber))
+    .map((p) => ({ ...p, distance: Math.abs(p.number - winningNumber) }))
+    .sort((a, b) => a.distance - b.distance)
   return { winners, topDistances }
 }
 
