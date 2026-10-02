@@ -1,11 +1,11 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
-import { LogOut, User, Settings, Flame } from 'lucide-react'
+import { ChevronDown, LogOut, Settings, Dices, Flame } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
 import type { UserRole } from '@/types'
 
@@ -19,6 +19,19 @@ export default function Header() {
   const supabase = createClient()
   const [user, setUser] = useState<HeaderUser | null>(null)
   const [loading, setLoading] = useState(true)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  // Đóng menu khi click ra ngoài
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   useEffect(() => {
     async function loadUser() {
@@ -92,42 +105,77 @@ export default function Header() {
           {loading ? (
             <div className="h-8 w-20 animate-pulse rounded-md bg-stone-800" />
           ) : user ? (
-            <>
-              {/* Trending link - hiển thị cho mọi user đã login */}
-              <Link
-                href="/trending"
-                className="flex items-center gap-1.5 rounded-md border border-stone-750 bg-stone-850 px-3 py-1.5 text-sm text-stone-400 transition-colors hover:border-gold-700 hover:text-gold-400"
+            <div ref={menuRef} className="relative">
+              {/* Nút user - mở dropdown */}
+              <button
+                onClick={() => setMenuOpen((v) => !v)}
+                className="flex items-center gap-2 rounded-md border border-stone-750 bg-stone-850 px-3 py-1.5 text-sm text-stone-300 transition-colors hover:border-gold-700 hover:text-gold-400"
               >
-                <Flame className="h-3.5 w-3.5" />
-                Trending
-              </Link>
-              {/* Admin link - chỉ hiển thị với admin/super_admin */}
-              {(user.role === 'admin' || user.role === 'super_admin') && (
-                <Link
-                  href="/admin/dashboard"
-                  className="flex items-center gap-1.5 rounded-md border border-stone-750 bg-stone-850 px-3 py-1.5 text-sm text-stone-400 transition-colors hover:border-gold-700 hover:text-gold-400"
-                >
-                  <Settings className="h-3.5 w-3.5" />
-                  Quản trị
-                </Link>
-              )}
-              {/* User info + logout */}
-              <div className="flex items-center gap-2">
-                <div className="hidden items-center gap-1.5 sm:flex">
-                  <User className="h-3.5 w-3.5 text-stone-500" />
-                  <span className="max-w-[140px] truncate text-xs text-stone-500">
-                    {user.email}
-                  </span>
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gold-600 text-xs font-bold text-stone-950">
+                  {(user.email[0] || '?').toUpperCase()}
+                </span>
+                <span className="hidden max-w-[120px] truncate sm:inline">{user.email}</span>
+                <ChevronDown
+                  className={`h-3.5 w-3.5 text-stone-500 transition-transform ${menuOpen ? 'rotate-180' : ''}`}
+                />
+              </button>
+
+              {/* Dropdown menu */}
+              {menuOpen && (
+                <div className="absolute right-0 z-50 mt-2 w-56 overflow-hidden rounded-lg border border-stone-750 bg-stone-900 shadow-xl shadow-black/50">
+                  <div className="border-b border-stone-750 px-4 py-2.5">
+                    <p className="truncate text-sm font-medium text-stone-200">{user.email}</p>
+                    <p className="text-xs text-stone-500">
+                      {user.role === 'super_admin'
+                        ? 'Super Admin'
+                        : user.role === 'admin'
+                          ? 'Admin'
+                          : 'Thành viên'}
+                    </p>
+                  </div>
+
+                  <Link
+                    href="/trending"
+                    onClick={() => setMenuOpen(false)}
+                    className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-stone-300 transition-colors hover:bg-stone-800 hover:text-gold-400"
+                  >
+                    <Flame className="h-4 w-4" />
+                    Trending
+                  </Link>
+
+                  <Link
+                    href="/lucky-number"
+                    onClick={() => setMenuOpen(false)}
+                    className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-stone-300 transition-colors hover:bg-stone-800 hover:text-gold-400"
+                  >
+                    <Dices className="h-4 w-4" />
+                    Đăng ký số
+                  </Link>
+
+                  {(user.role === 'admin' || user.role === 'super_admin') && (
+                    <Link
+                      href="/admin/dashboard"
+                      onClick={() => setMenuOpen(false)}
+                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-stone-300 transition-colors hover:bg-stone-800 hover:text-gold-400"
+                    >
+                      <Settings className="h-4 w-4" />
+                      Quản trị
+                    </Link>
+                  )}
+
+                  <button
+                    onClick={() => {
+                      setMenuOpen(false)
+                      handleLogout()
+                    }}
+                    className="flex w-full items-center gap-2.5 border-t border-stone-750 px-4 py-2.5 text-left text-sm text-red-400 transition-colors hover:bg-red-950/40"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Đăng xuất
+                  </button>
                 </div>
-                <button
-                  onClick={handleLogout}
-                  className="flex items-center gap-1 rounded-md border border-stone-750 px-2.5 py-1.5 text-xs text-stone-500 transition-colors hover:border-red-800 hover:text-red-400"
-                >
-                  <LogOut className="h-3 w-3" />
-                  <span className="hidden sm:inline">Đăng xuất</span>
-                </button>
-              </div>
-            </>
+              )}
+            </div>
           ) : null /* Không login → không hiển thị gì (middleware sẽ redirect) */}
         </nav>
       </div>
