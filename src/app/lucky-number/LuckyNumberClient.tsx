@@ -196,6 +196,19 @@ export default function LuckyNumberClient() {
     return [...map.values()].sort((a, b) => a.name.localeCompare(b.name))
   }, [data])
 
+  // Tính người trúng giải từ picks (cùng quy tắc server: 2 khoảng cách nhỏ nhất, hòa thì cùng trúng)
+  const resultWinners = useMemo<Winner[] | null>(() => {
+    if (!data || !lastWinningNumber || data.picks.length < 2) return null
+    const withDist = data.picks.map((p) => ({
+      ...p,
+      distance: Math.abs(p.number - lastWinningNumber),
+    }))
+    const topDists = [...new Set(withDist.map((w) => w.distance))].sort((a, b) => a - b).slice(0, 2)
+    return withDist
+      .filter((w) => topDists.includes(w.distance))
+      .sort((a, b) => a.distance - b.distance)
+  }, [data, lastWinningNumber])
+
   return (
     <main className="mx-auto max-w-7xl px-4 py-8">
       <div className="mb-8 text-center">
@@ -437,9 +450,56 @@ export default function LuckyNumberClient() {
                 )}
               </div>
             ) : (
-              <div className="rounded-xl border border-stone-750 bg-stone-900/60 p-5 text-center text-sm text-stone-500 shadow-lg shadow-black/30">
-                <Trophy className="mx-auto mb-2 h-8 w-8 text-gold-800" />
-                Kết quả sẽ được công bố sau khi Admin tổng kết giải CWL. Chúc bạn may mắn!
+              <div className="space-y-4">
+                {/* Kết quả công bố cho mọi người */}
+                {resultWinners ? (
+                  <div className="rounded-xl border border-gold-800 bg-gold-950/20 p-5 shadow-lg shadow-black/30">
+                    <div className="mb-4 text-center">
+                      <Trophy className="mx-auto mb-2 h-10 w-10 text-gold-400" />
+                      <h2 className="gold-shimmer text-xl font-bold">Người trúng giải!</h2>
+                      <p className="mt-1 text-sm text-stone-400">
+                        Số may mắn:{' '}
+                        <span className="font-mono text-lg font-bold text-gold-400">
+                          {lastWinningNumber}
+                        </span>
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      {resultWinners.map((w, i) => (
+                        <div
+                          key={`${w.user_id}-${w.number}`}
+                          className="flex items-center justify-between rounded-lg border border-gold-800 bg-gold-950/30 px-4 py-3"
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-gold-600 text-sm font-bold text-stone-950">
+                              {i + 1}
+                            </span>
+                            <span className="font-medium text-stone-200">{w.user_name}</span>
+                          </div>
+                          <div className="text-right">
+                            <div className="font-mono text-lg font-bold text-gold-400">
+                              {w.number}
+                            </div>
+                            <div className="text-xs text-stone-500">cách {w.distance} số</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-stone-750 bg-stone-900/60 p-5 text-center text-sm text-stone-500 shadow-lg shadow-black/30">
+                    <Trophy className="mx-auto mb-2 h-8 w-8 text-gold-800" />
+                    Kết quả sẽ được công bố sau khi Admin tổng kết giải CWL. Chúc bạn may mắn!
+                  </div>
+                )}
+
+                {/* Khối thông tin chờ kết quả */}
+                {closed && !lastWinningNumber && (
+                  <div className="rounded-xl border border-stone-750 bg-stone-900/60 p-5 text-center text-sm text-stone-400 shadow-lg shadow-black/30">
+                    <Lock className="mx-auto mb-2 h-6 w-6 text-stone-500" />
+                    Đăng ký đã đóng. Đang chờ Admin tổng kết và công bố kết quả.
+                  </div>
+                )}
               </div>
             )}
           </section>
