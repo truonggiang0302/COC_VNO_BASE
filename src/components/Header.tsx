@@ -5,7 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
-import { ChevronDown, LogOut, Settings, Dices, Flame, Swords } from 'lucide-react'
+import { ChevronDown, LogOut, Settings, Dices, Swords } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
 import type { UserRole } from '@/types'
 
@@ -135,21 +135,12 @@ export default function Header() {
                   </div>
 
                   <Link
-                    href="/trending"
-                    onClick={() => setMenuOpen(false)}
-                    className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-stone-300 transition-colors hover:bg-stone-800 hover:text-gold-400"
-                  >
-                    <Flame className="h-4 w-4" />
-                    Trending
-                  </Link>
-
-                  <Link
                     href="/lucky-number"
                     onClick={() => setMenuOpen(false)}
                     className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-stone-300 transition-colors hover:bg-stone-800 hover:text-gold-400"
                   >
                     <Dices className="h-4 w-4" />
-                    Đăng ký số
+                    Giải đấu CWL
                   </Link>
 
                   <Link
