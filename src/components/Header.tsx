@@ -5,7 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
-import { ChevronDown, LogOut, Settings, Dices, Flame } from 'lucide-react'
+import { ChevronDown, LogOut, Settings, Dices, Flame, Swords } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
 import type { UserRole } from '@/types'
 
@@ -150,6 +150,15 @@ export default function Header() {
                   >
                     <Dices className="h-4 w-4" />
                     Đăng ký số
+                  </Link>
+
+                  <Link
+                    href="/tournament"
+                    onClick={() => setMenuOpen(false)}
+                    className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-stone-300 transition-colors hover:bg-stone-800 hover:text-gold-400"
+                  >
+                    <Swords className="h-4 w-4" />
+                    Giải đấu
                   </Link>
 
                   {(user.role === 'admin' || user.role === 'super_admin') && (
