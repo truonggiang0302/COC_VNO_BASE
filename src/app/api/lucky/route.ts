@@ -43,6 +43,7 @@ export async function GET() {
       month,
       isClosed: stateRes.data?.is_closed ?? false,
       winningNumber: stateRes.data?.winning_number ?? null,
+      winnerSlots: stateRes.data?.winner_slots ?? 2,
       picks: picksRes.data ?? [],
     })
   } catch (err) {

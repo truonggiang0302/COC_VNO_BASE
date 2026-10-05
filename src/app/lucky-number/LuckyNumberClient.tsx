@@ -19,6 +19,7 @@ interface LuckyData {
   month: string
   isClosed: boolean
   winningNumber: number | null
+  winnerSlots: number
   picks: Pick[]
 }
 
@@ -34,6 +35,8 @@ export default function LuckyNumberClient() {
   const [userRole, setUserRole] = useState<'viewer' | 'admin' | 'super_admin'>('viewer')
   const [saving, setSaving] = useState(false)
   const [winningInput, setWinningInput] = useState('')
+  const [slotsInput, setSlotsInput] = useState<string>('') // cấu hình số người trúng (chưa lưu)
+  const [winnerSlots, setWinnerSlots] = useState(2)
   const [winners, setWinners] = useState<Winner[] | null>(null)
   const [lastWinningNumber, setLastWinningNumber] = useState<number | null>(null)
   const [showWinnerModal, setShowWinnerModal] = useState(false)
@@ -70,6 +73,10 @@ export default function LuckyNumberClient() {
         setSelected(mine)
       }
       if (lucky.winningNumber) setLastWinningNumber(lucky.winningNumber)
+      if (typeof lucky.winnerSlots === 'number' && lucky.winnerSlots >= 1) {
+        setWinnerSlots(lucky.winnerSlots)
+        setSlotsInput(String(lucky.winnerSlots))
+      }
     } catch {
       toast.error('Không tải được dữ liệu')
     } finally {
@@ -147,13 +154,29 @@ export default function LuckyNumberClient() {
     }
   }
 
+  const handleSaveSlots = async () => {
+    const slots = Number(slotsInput)
+    if (!Number.isInteger(slots) || slots < 1 || slots > 99) {
+      toast.error('Số người trúng giải phải là số nguyên từ 1 đến 99')
+      return
+    }
+    const json = await adminAction('set-slots', { winnerSlots: slots })
+    if (json) {
+      setWinnerSlots(slots)
+      toast.success(`Đã lưu: ${slots} người trúng giải`)
+    }
+  }
+
   const handleFindWinners = async () => {
     const num = Number(winningInput)
     if (!Number.isInteger(num) || num < 1 || num > 99) {
       toast.error('Nhập số may mắn từ 1 đến 99')
       return
     }
-    const json = await adminAction('winning', { winningNumber: num })
+    // Dùng cấu hình đã lưu (nếu ô nhập đang sửa thì lấy giá trị đó)
+    const pendingSlots = Number(slotsInput)
+    const effectiveSlots = Number.isInteger(pendingSlots) && pendingSlots >= 1 ? pendingSlots : winnerSlots
+    const json = await adminAction('winning', { winningNumber: num, winnerSlots: effectiveSlots })
     if (json) {
       setWinners(json.winners)
       setLastWinningNumber(json.winningNumber)
@@ -196,18 +219,20 @@ export default function LuckyNumberClient() {
     return [...map.values()].sort((a, b) => a.name.localeCompare(b.name))
   }, [data])
 
-  // Tính người trúng giải từ picks (cùng quy tắc server: 2 khoảng cách nhỏ nhất, hòa thì cùng trúng)
+  // Tính người trúng giải từ picks (cùng quy tắc server: `winnerSlots` khoảng cách nhỏ nhất, hòa thì cùng trúng)
   const resultWinners = useMemo<Winner[] | null>(() => {
     if (!data || !lastWinningNumber || data.picks.length < 2) return null
     const withDist = data.picks.map((p) => ({
       ...p,
       distance: Math.abs(p.number - lastWinningNumber),
     }))
-    const topDists = [...new Set(withDist.map((w) => w.distance))].sort((a, b) => a - b).slice(0, 2)
+    const topDists = [...new Set(withDist.map((w) => w.distance))]
+      .sort((a, b) => a - b)
+      .slice(0, Math.max(1, winnerSlots))
     return withDist
       .filter((w) => topDists.includes(w.distance))
       .sort((a, b) => a.distance - b.distance)
-  }, [data, lastWinningNumber])
+  }, [data, lastWinningNumber, winnerSlots])
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8">
@@ -402,6 +427,32 @@ export default function LuckyNumberClient() {
                     Tìm thành viên may mắn
                   </button>
                 </div>
+
+                {/* Cấu hình số người trúng giải */}
+                <label className="mt-4 mb-1.5 block text-sm text-stone-400">
+                  Số người trúng giải (mặc định 2)
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    min={1}
+                    max={99}
+                    value={slotsInput}
+                    onChange={(e) => setSlotsInput(e.target.value)}
+                    placeholder="VD: 2"
+                    className="w-28 rounded-md border border-stone-700 bg-stone-850 px-3 py-2 text-sm text-stone-200 placeholder-stone-600 focus:border-gold-700 focus:outline-none"
+                  />
+                  <button
+                    onClick={handleSaveSlots}
+                    className="rounded-md border border-gold-800 bg-gold-950/40 px-4 py-2 text-sm font-semibold text-gold-400 transition-colors hover:bg-gold-900/50"
+                  >
+                    Lưu cấu hình
+                  </button>
+                </div>
+                <p className="mt-2 text-xs text-stone-500">
+                  Hiện tại: <span className="text-gold-400">{winnerSlots}</span> người trúng giải.
+                  Nếu nhiều người hòa khoảng cách nhau thì tất cả đều trúng.
+                </p>
 
                 {/* Kết quả hiện tại (nếu có) */}
                 {lastWinningNumber && (

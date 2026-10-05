@@ -62,3 +62,6 @@ CREATE POLICY "Authenticated can read lucky_state"
 -- 4. Index
 CREATE INDEX IF NOT EXISTS idx_lucky_picks_month ON public.lucky_picks (month);
 CREATE INDEX IF NOT EXISTS idx_lucky_picks_user ON public.lucky_picks (user_id, month);
+
+-- 5. Migration: so nguoi trung giai co cau hinh (mac dinh 2)
+ALTER TABLE public.lucky_state ADD COLUMN IF NOT EXISTS winner_slots INT NOT NULL DEFAULT 2;

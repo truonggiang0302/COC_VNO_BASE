@@ -16,14 +16,14 @@ interface WinnerPick {
 
 /**
  * Tìm người trúng giải:
- * - 2 người có khoảng cách nhỏ nhất với số may mắn
- * - Nếu hòa khoảng cách thì tất cả người hòa cùng trúng (có thể >2)
+ * - `slots` người có khoảng cách nhỏ nhất với số may mắn
+ * - Nếu hòa khoảng cách thì tất cả người hòa cùng trúng (có thể >slots)
  */
-function findWinners(picks: WinnerPick[], winningNumber: number) {
+function findWinners(picks: WinnerPick[], winningNumber: number, slots: number) {
   const distances = [...new Set(picks.map((p) => Math.abs(p.number - winningNumber)))].sort(
     (a, b) => a - b,
   )
-  const topDistances = distances.slice(0, 2) // 2 khoảng cách nhỏ nhất (trùng nhau chỉ tính 1)
+  const topDistances = distances.slice(0, Math.max(1, slots)) // các khoảng cách nhỏ nhất (trùng nhau chỉ tính 1)
   const winners = picks
     .filter((p) => topDistances.includes(Math.abs(p.number - winningNumber)))
     .map((p) => ({ ...p, distance: Math.abs(p.number - winningNumber) }))
@@ -59,10 +59,30 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Không có quyền' }, { status: 403 })
     }
 
-    const { action, winningNumber } = await request.json()
+    const { action, winningNumber, winnerSlots } = await request.json()
     const month = currentMonth()
 
+    // Validate số suất trúng (dùng chung cho set-slots và winning)
+    let slots = 2
+    if (winnerSlots !== undefined) {
+      slots = Number(winnerSlots)
+      if (!Number.isInteger(slots) || slots < 1 || slots > 99) {
+        return NextResponse.json(
+          { error: 'Số người trúng giải phải là số nguyên từ 1 đến 99' },
+          { status: 400 },
+        )
+      }
+    }
+
     switch (action) {
+      // Lưu cấu hình số suất trúng giải
+      case 'set-slots': {
+        const { error } = await supabaseAdmin
+          .from('lucky_state')
+          .upsert({ month, winner_slots: slots })
+        if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+        return NextResponse.json({ success: true, winnerSlots: slots })
+      }
       // Đóng đăng ký
       case 'close': {
         const { error } = await supabaseAdmin
@@ -103,14 +123,26 @@ export async function POST(request: Request) {
           )
         }
 
-        const { winners, topDistances } = findWinners(picks, num)
+        const { winners, topDistances } = findWinners(picks, num, slots)
 
         const { error } = await supabaseAdmin
           .from('lucky_state')
-          .upsert({ month, is_closed: true, winning_number: num, closed_at: new Date().toISOString() })
+          .upsert({
+            month,
+            is_closed: true,
+            winning_number: num,
+            winner_slots: slots,
+            closed_at: new Date().toISOString(),
+          })
         if (error) return NextResponse.json({ error: error.message }, { status: 400 })
 
-        return NextResponse.json({ success: true, winners, topDistances, winningNumber: num })
+        return NextResponse.json({
+          success: true,
+          winners,
+          topDistances,
+          winningNumber: num,
+          winnerSlots: slots,
+        })
       }
 
       // Xóa toàn bộ dữ liệu tháng (chỉ super_admin)
