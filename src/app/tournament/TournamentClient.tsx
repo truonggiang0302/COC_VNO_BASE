@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
-import { GitMerge, RotateCcw, Swords, Target, Trophy, UserPlus, X } from 'lucide-react'
+import { CheckCircle, GitMerge, RotateCcw, Swords, Target, Trophy, UserPlus } from 'lucide-react'
 
 interface Entry {
   id: number
@@ -29,6 +29,7 @@ interface TournamentData {
   matches: Match[]
   myUserId: string
   isAdmin: boolean
+  isSuperAdmin: boolean
 }
 
 type Side = 'p1' | 'p2'
@@ -40,8 +41,10 @@ export default function TournamentClient() {
   const [swapMode, setSwapMode] = useState(false)
   const [swapSelection, setSwapSelection] = useState<{ matchId: number; side: Side } | null>(null)
   const [busy, setBusy] = useState(false)
+  const [showRegisterModal, setShowRegisterModal] = useState(false)
 
   const isAdmin = data?.isAdmin ?? false
+  const isSuperAdmin = data?.isSuperAdmin ?? false
   const status = data?.status ?? 'open'
   const myUserId = data?.myUserId ?? ''
 
@@ -82,6 +85,7 @@ export default function TournamentClient() {
       toast.success('Đăng ký giải thành công! Vui lòng đợi hệ thống ghép đối thủ', {
         duration: 5000,
       })
+      setShowRegisterModal(true)
       await load()
     } finally {
       setRegistering(false)
@@ -250,7 +254,6 @@ export default function TournamentClient() {
       { side: 'p1' as Side, id: match.player1_id, name: match.player1_name, isWinner: match.winner_id === match.player1_id },
       { side: 'p2' as Side, id: match.player2_id, name: match.player2_name, isWinner: match.winner_id === match.player2_id },
     ]
-    const bye = !match.player2_id && match.winner_id
 
     return (
       <div
@@ -265,10 +268,11 @@ export default function TournamentClient() {
       >
         <div className="mb-2 flex items-center justify-between text-[11px] uppercase tracking-wider text-stone-500">
           <span>{isThird ? 'Tranh hạng Ba' : `Trận ${match.round}.${match.slot}`}</span>
-          {bye && <span className="text-gold-500">Bye</span>}
         </div>
         <div className="space-y-1.5">
-          {players.map((p) => (
+          {players
+            .filter((p) => p.id)
+            .map((p) => (
             <div key={p.side} className="flex items-center justify-between gap-2">
               <button
                 disabled={!isAdmin || !pending || busy || !swapMode}
@@ -409,7 +413,7 @@ export default function TournamentClient() {
                     {swapMode ? 'Tắt chế độ đổi người' : 'Đổi người giữa các cặp'}
                   </button>
                 )}
-                {isAdmin && (
+                {isSuperAdmin && (
                   <button
                     onClick={handleReset}
                     disabled={busy}
@@ -524,6 +528,32 @@ export default function TournamentClient() {
                   </div>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Popup thông báo đăng ký thành công */}
+          {showRegisterModal && (
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4"
+              onClick={() => setShowRegisterModal(false)}
+            >
+              <div
+                className="w-full max-w-sm rounded-xl border border-gold-700 bg-stone-900 p-6 text-center shadow-2xl shadow-black/50"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <CheckCircle className="mx-auto mb-3 h-12 w-12 text-green-400" />
+                <h3 className="mb-2 text-lg font-bold text-gold-300">Đăng ký thành công!</h3>
+                <p className="mb-5 text-sm text-stone-300">
+                  Bạn đã ghi danh vào giải đấu. Vui lòng đợi hệ thống ghép đối thủ — khi có đối thủ,
+                  thông báo sẽ hiển thị tại trang này.
+                </p>
+                <button
+                  onClick={() => setShowRegisterModal(false)}
+                  className="w-full rounded-md border border-gold-700 bg-gold-950/40 px-4 py-2 text-sm font-semibold text-gold-300 transition-colors hover:bg-gold-900/40"
+                >
+                  Đã hiểu
+                </button>
+              </div>
             </div>
           )}
         </div>

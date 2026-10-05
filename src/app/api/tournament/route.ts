@@ -59,6 +59,7 @@ export async function GET() {
       matches: matchesRes.data ?? [],
       myUserId: user.id,
       isAdmin: role === 'admin' || role === 'super_admin',
+      isSuperAdmin: role === 'super_admin',
     })
   } catch (err) {
     console.error('GET tournament error:', err)

@@ -67,8 +67,11 @@ async function advanceRound(round: number) {
     name: m.winner_id === m.player1_id ? m.player1_name : m.player2_name,
   }))
 
-  // Vòng này là CHUNG KẾT → giải kết thúc
-  if (rows.length === 1) {
+  // Chỉ tính các trận thật (có 2 người) để nhận diện bán kết/chung kết
+  const realRows = rows.filter((m) => !!m.player2_id)
+
+  // Vòng này là CHUNG KẾT (1 trận thật) → giải kết thúc
+  if (rows.length === 1 && realRows.length === 1) {
     await supabaseAdmin
       .from('tournament_state')
       .update({ status: 'finished', updated_at: new Date().toISOString() })
@@ -78,16 +81,19 @@ async function advanceRound(round: number) {
 
   const nextRound = round + 1
 
-  // Vòng này là BÁN KẾT (2 trận) → tạo Chung kết + trận tranh hạng Ba
-  if (rows.length === 2) {
-    const losers: Player[] = rows.map((m) => {
+  // Vòng này là BÁN KẾT (2 trận, đều có 2 người) → tạo Chung kết + tranh hạng Ba
+  if (realRows.length === 2 && rows.length === 2) {
+    const losers: (Player | null)[] = realRows.map((m) => {
       const loserIsP1 = m.winner_id === m.player2_id
-      return {
-        id: (loserIsP1 ? m.player1_id : m.player2_id)!,
-        name: loserIsP1 ? m.player1_name : m.player2_name,
-      }
+      return loserIsP1
+        ? { id: m.player1_id!, name: m.player1_name }
+        : { id: m.player2_id!, name: m.player2_name }
     })
-    await supabaseAdmin.from('tournament_matches').insert([
+    // Tranh hạng Ba: nếu 1 bên là bye (không có người thua) → người còn lại tự thắng
+    const bronzeP1 = losers[0] ?? losers[1]
+    const bothLosers = losers[0] && losers[1]
+
+    const inserts: Record<string, unknown>[] = [
       {
         round: nextRound,
         slot: 1,
@@ -96,16 +102,31 @@ async function advanceRound(round: number) {
         player2_id: winners[1].id,
         player2_name: winners[1].name,
       },
-      {
+    ]
+    if (bothLosers) {
+      inserts.push({
         round: nextRound,
         slot: 1,
-        player1_id: losers[0].id,
-        player1_name: losers[0].name,
-        player2_id: losers[1].id,
-        player2_name: losers[1].name,
+        player1_id: losers[0]!.id,
+        player1_name: losers[0]!.name,
+        player2_id: losers[1]!.id,
+        player2_name: losers[1]!.name,
         is_third_place: true,
-      },
-    ])
+      })
+    } else if (bronzeP1) {
+      // Chỉ có 1 người thua thật → người đó tự thắng trận tranh hạng Ba
+      inserts.push({
+        round: nextRound,
+        slot: 1,
+        player1_id: bronzeP1.id,
+        player1_name: bronzeP1.name,
+        player2_id: null,
+        player2_name: '',
+        winner_id: bronzeP1.id,
+        is_third_place: true,
+      })
+    }
+    await supabaseAdmin.from('tournament_matches').insert(inserts)
     return
   }
 
@@ -309,8 +330,14 @@ export async function POST(request: Request) {
         return NextResponse.json({ success: true })
       }
 
-      // Reset giải (xóa toàn bộ trận + đăng ký, mở lại đăng ký)
+      // Reset giải (xóa toàn bộ trận + đăng ký, mở lại đăng ký) — chỉ super_admin
       case 'reset': {
+        if (role !== 'super_admin') {
+          return NextResponse.json(
+            { error: 'Chỉ Super Admin mới được reset giải' },
+            { status: 403 },
+          )
+        }
         const [delMatches, delEntries] = await Promise.all([
           supabaseAdmin.from('tournament_matches').delete().neq('id', 0),
           supabaseAdmin.from('tournament_entries').delete().neq('id', 0),
