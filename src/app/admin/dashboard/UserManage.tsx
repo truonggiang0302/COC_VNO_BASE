@@ -5,7 +5,8 @@ import toast from 'react-hot-toast'
 import { createClient } from '@/utils/supabase/client'
 import type { Profile, UserRole } from '@/types'
 import { cn } from '@/lib/cn'
-import { Shield, Loader2, UserPlus, UserCog, Pencil, Check, X } from 'lucide-react'
+import DeleteConfirmModal from './DeleteConfirmModal'
+import { Shield, Loader2, UserPlus, UserCog, Pencil, Check, X, Trash2 } from 'lucide-react'
 
 const ROLE_LABELS: Record<UserRole, string> = {
   super_admin: 'Super Admin',
@@ -32,6 +33,9 @@ export default function UserManage() {
   const [editingName, setEditingName] = useState<string | null>(null)
   const [editingNameValue, setEditingNameValue] = useState('')
   const [savingName, setSavingName] = useState(false)
+  const [myUserId, setMyUserId] = useState<string | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<Profile | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   const loadUsers = async () => {
     setLoading(true)
@@ -86,7 +90,27 @@ export default function UserManage() {
 
   useEffect(() => {
     loadUsers()
+    supabase.auth.getUser().then(({ data }) => setMyUserId(data.user?.id ?? null))
   }, [])
+
+  const handleDeleteUser = async () => {
+    if (!deleteTarget) return
+    setDeleting(true)
+    const res = await fetch('/api/admin/delete-user', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: deleteTarget.id }),
+    })
+    const data = await res.json()
+    if (!res.ok) {
+      toast.error('Xóa tài khoản thất bại: ' + data.error)
+    } else {
+      toast.success(`Đã xóa tài khoản "${deleteTarget.name || deleteTarget.email || deleteTarget.id}"!`)
+      setDeleteTarget(null)
+      loadUsers()
+    }
+    setDeleting(false)
+  }
 
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -350,6 +374,15 @@ export default function UserManage() {
                       {user.role === 'super_admin' && (
                         <span className="text-xs text-stone-600">Không thể thay đổi</span>
                       )}
+                      {user.id !== myUserId && user.role !== 'super_admin' && (
+                        <button
+                          onClick={() => setDeleteTarget(user)}
+                          title="Xóa tài khoản"
+                          className="ml-2 text-stone-600 transition-colors hover:text-red-400"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))
@@ -358,6 +391,17 @@ export default function UserManage() {
           </table>
         </div>
       </div>
+
+      {/* Modal xác nhận xóa tài khoản */}
+      {deleteTarget && (
+        <DeleteConfirmModal
+          baseName={deleteTarget.name || deleteTarget.email || deleteTarget.id}
+          entityLabel="tài khoản"
+          onCancel={() => setDeleteTarget(null)}
+          onConfirm={handleDeleteUser}
+        />
+      )}
+
     </div>
   )
 }

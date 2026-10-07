@@ -4,11 +4,18 @@ import { AlertTriangle } from 'lucide-react'
 
 interface Props {
   baseName: string
+  /** Nhãn loại đối tượng, vd "base", "tài khoản". Mặc định: "base" */
+  entityLabel?: string
   onCancel: () => void
   onConfirm: () => void
 }
 
-export default function DeleteConfirmModal({ baseName, onCancel, onConfirm }: Props) {
+export default function DeleteConfirmModal({
+  baseName,
+  entityLabel = 'base',
+  onCancel,
+  onConfirm,
+}: Props) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
       <div className="stone-card w-full max-w-sm overflow-hidden rounded-2xl p-6">
@@ -19,7 +26,7 @@ export default function DeleteConfirmModal({ baseName, onCancel, onConfirm }: Pr
           <div>
             <h3 className="font-semibold text-stone-100">Xác nhận xóa</h3>
             <p className="mt-1 text-sm text-stone-400">
-              Bạn có chắc muốn xóa base{' '}
+              Bạn có chắc muốn xóa {entityLabel}{' '}
               <span className="font-semibold text-gold-400">&ldquo;{baseName}&rdquo;</span>?
               Hành động này không thể hoàn tác.
             </p>
