@@ -5,7 +5,15 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
-import { ChevronDown, LogOut, Settings, Dices, Swords } from 'lucide-react'
+import {
+  ChevronDown,
+  LogOut,
+  Settings,
+  Dices,
+  Swords,
+  KeyRound,
+  Loader2,
+} from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
 import type { UserRole } from '@/types'
 
@@ -20,7 +28,35 @@ export default function Header() {
   const [user, setUser] = useState<HeaderUser | null>(null)
   const [loading, setLoading] = useState(true)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [showChangePw, setShowChangePw] = useState(false)
+  const [newPw, setNewPw] = useState('')
+  const [confirmPw, setConfirmPw] = useState('')
+  const [changingPw, setChangingPw] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
+
+  // Đổi mật khẩu của chính mình
+  const handleChangePassword = async () => {
+    if (newPw.length < 6) {
+      toast.error('Mật khẩu phải có ít nhất 6 ký tự')
+      return
+    }
+    if (newPw !== confirmPw) {
+      toast.error('Mật khẩu nhập lại không khớp')
+      return
+    }
+    setChangingPw(true)
+    const { error } = await supabase.auth.updateUser({ password: newPw })
+    if (error) {
+      toast.error('Đổi mật khẩu thất bại: ' + error.message)
+    } else {
+      toast.success('Đã đổi mật khẩu thành công!')
+      setShowChangePw(false)
+      setNewPw('')
+      setConfirmPw('')
+      setMenuOpen(false)
+    }
+    setChangingPw(false)
+  }
 
   // Đóng menu khi click ra ngoài
   useEffect(() => {
@@ -166,6 +202,19 @@ export default function Header() {
                   <button
                     onClick={() => {
                       setMenuOpen(false)
+                      setShowChangePw(true)
+                      setNewPw('')
+                      setConfirmPw('')
+                    }}
+                    className="flex w-full items-center gap-2.5 border-t border-stone-750 px-4 py-2.5 text-left text-sm text-stone-300 transition-colors hover:bg-stone-800 hover:text-gold-400"
+                  >
+                    <KeyRound className="h-4 w-4" />
+                    Đổi mật khẩu
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setMenuOpen(false)
                       handleLogout()
                     }}
                     className="flex w-full items-center gap-2.5 border-t border-stone-750 px-4 py-2.5 text-left text-sm text-red-400 transition-colors hover:bg-red-950/40"
@@ -179,6 +228,64 @@ export default function Header() {
           ) : null /* Không login → không hiển thị gì (middleware sẽ redirect) */}
         </nav>
       </div>
+
+      {/* Modal đổi mật khẩu */}
+      {showChangePw && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+          onClick={() => setShowChangePw(false)}
+        >
+          <div
+            className="stone-card w-full max-w-sm rounded-2xl p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-4 flex items-start gap-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-gold-800 bg-gold-950">
+                <KeyRound className="h-5 w-5 text-gold-400" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-stone-100">Đổi mật khẩu</h3>
+                <p className="mt-1 text-sm text-stone-400">
+                  Nhập mật khẩu mới cho tài khoản của bạn
+                </p>
+              </div>
+            </div>
+            <div className="space-y-3">
+              <input
+                type="password"
+                value={newPw}
+                onChange={(e) => setNewPw(e.target.value)}
+                placeholder="Mật khẩu mới (tối thiểu 6 ký tự)"
+                className="coc-input w-full rounded-md px-3 py-2 text-sm"
+                autoFocus
+              />
+              <input
+                type="password"
+                value={confirmPw}
+                onChange={(e) => setConfirmPw(e.target.value)}
+                placeholder="Nhập lại mật khẩu mới"
+                className="coc-input w-full rounded-md px-3 py-2 text-sm"
+              />
+            </div>
+            <div className="mt-4 flex justify-end gap-3">
+              <button
+                onClick={() => setShowChangePw(false)}
+                className="rounded-md border border-stone-750 px-4 py-2 text-sm text-stone-400 hover:text-stone-200 transition-colors"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleChangePassword}
+                disabled={changingPw || newPw.length < 6 || newPw !== confirmPw}
+                className="btn-gold flex items-center gap-2 rounded-md px-4 py-2 text-sm disabled:opacity-50"
+              >
+                {changingPw && <Loader2 className="h-4 w-4 animate-spin" />}
+                Xác nhận
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Bottom gold line */}
       <div className="h-px w-full bg-gradient-to-r from-transparent via-gold-800/40 to-transparent" />

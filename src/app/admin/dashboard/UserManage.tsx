@@ -331,7 +331,7 @@ export default function UserManage() {
                   <tr
                     key={user.id}
                     className={cn(
-                      'border-b border-stone-750/50 transition-colors hover:bg-stone-900/30',
+                      'group border-b border-stone-750/50 transition-colors hover:bg-stone-900/30',
                       idx % 2 === 0 ? '' : 'bg-stone-950/20',
                     )}
                   >
