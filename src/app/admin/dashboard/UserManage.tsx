@@ -6,7 +6,7 @@ import { createClient } from '@/utils/supabase/client'
 import type { Profile, UserRole } from '@/types'
 import { cn } from '@/lib/cn'
 import DeleteConfirmModal from './DeleteConfirmModal'
-import { Shield, Loader2, UserPlus, UserCog, Pencil, Check, X, Trash2 } from 'lucide-react'
+import { Shield, Loader2, UserPlus, UserCog, Pencil, Check, X, Trash2, KeyRound } from 'lucide-react'
 
 const ROLE_LABELS: Record<UserRole, string> = {
   super_admin: 'Super Admin',
@@ -36,6 +36,9 @@ export default function UserManage() {
   const [myUserId, setMyUserId] = useState<string | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Profile | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [resetTarget, setResetTarget] = useState<Profile | null>(null)
+  const [resetPassword, setResetPassword] = useState('')
+  const [resetting, setResetting] = useState(false)
 
   const loadUsers = async () => {
     setLoading(true)
@@ -110,6 +113,29 @@ export default function UserManage() {
       loadUsers()
     }
     setDeleting(false)
+  }
+
+  const handleResetPassword = async () => {
+    if (!resetTarget) return
+    if (resetPassword.length < 6) {
+      toast.error('Mật khẩu phải có ít nhất 6 ký tự')
+      return
+    }
+    setResetting(true)
+    const res = await fetch('/api/admin/update-profile', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: resetTarget.id, password: resetPassword }),
+    })
+    const data = await res.json()
+    if (!res.ok) {
+      toast.error('Đặt lại mật khẩu thất bại: ' + data.error)
+    } else {
+      toast.success(`Đã đặt lại mật khẩu cho "${resetTarget.name || resetTarget.email}"!`)
+      setResetTarget(null)
+      setResetPassword('')
+    }
+    setResetting(false)
   }
 
   const handleCreateUser = async (e: React.FormEvent) => {
@@ -383,6 +409,18 @@ export default function UserManage() {
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>
                       )}
+                      {user.id !== myUserId && (
+                        <button
+                          onClick={() => {
+                            setResetTarget(user)
+                            setResetPassword('')
+                          }}
+                          title="Đặt lại mật khẩu"
+                          className="ml-1 text-stone-600 transition-colors hover:text-gold-400"
+                        >
+                          <KeyRound className="h-3.5 w-3.5" />
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))
@@ -391,6 +429,57 @@ export default function UserManage() {
           </table>
         </div>
       </div>
+
+      {/* Modal đặt lại mật khẩu */}
+      {resetTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+          <div className="stone-card w-full max-w-sm overflow-hidden rounded-2xl p-6">
+            <div className="mb-4 flex items-start gap-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-gold-800 bg-gold-950">
+                <KeyRound className="h-5 w-5 text-gold-400" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-stone-100">Đặt lại mật khẩu</h3>
+                <p className="mt-1 text-sm text-stone-400">
+                  Cho tài khoản{' '}
+                  <span className="font-semibold text-gold-400">
+                    &ldquo;{resetTarget.name || resetTarget.email || resetTarget.id}&rdquo;
+                  </span>
+                </p>
+              </div>
+            </div>
+            <input
+              type="password"
+              value={resetPassword}
+              onChange={e => setResetPassword(e.target.value)}
+              placeholder="Mật khẩu mới (tối thiểu 6 ký tự)"
+              className="coc-input mb-4 w-full rounded-md px-3 py-2 text-sm"
+              autoFocus
+              onKeyDown={e => {
+                if (e.key === 'Enter' && !resetting) handleResetPassword()
+              }}
+            />
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setResetTarget(null)
+                  setResetPassword('')
+                }}
+                className="rounded-md border border-stone-750 px-4 py-2 text-sm text-stone-400 hover:text-stone-200 transition-colors"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleResetPassword}
+                disabled={resetting || resetPassword.length < 6}
+                className="rounded-md bg-red-900 px-4 py-2 text-sm font-semibold text-red-200 hover:bg-red-800 transition-colors border border-red-800 disabled:opacity-50"
+              >
+                {resetting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Đặt lại'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal xác nhận xóa tài khoản */}
       {deleteTarget && (

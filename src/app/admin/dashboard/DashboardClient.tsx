@@ -125,7 +125,7 @@ export default function DashboardClient({ initialBases, error, userEmail, userRo
             <LayoutGrid className="h-3.5 w-3.5" />
             Quản lý Base
           </button>
-          {isSuperAdmin && (
+          {(isSuperAdmin || userRole === 'admin') && (
             <button
               onClick={() => setActiveTab('users')}
               className={cn(
@@ -276,7 +276,7 @@ export default function DashboardClient({ initialBases, error, userEmail, userRo
           </>
         )}
 
-        {activeTab === 'users' && isSuperAdmin && <UserManage />}
+        {activeTab === 'users' && (isSuperAdmin || userRole === 'admin') && <UserManage />}
         {activeTab === 'clan' && <ClanManage />}
       </main>
 
