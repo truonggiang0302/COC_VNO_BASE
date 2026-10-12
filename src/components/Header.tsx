@@ -10,15 +10,16 @@ import {
   LogOut,
   Settings,
   Dices,
-  Swords,
   KeyRound,
   Loader2,
+  Play,
 } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
 import type { UserRole } from '@/types'
 
 interface HeaderUser {
-  email: string
+  email: string      // email thật (dùng để tra cứu DB)
+  displayName: string // tên hiển thị
   role: UserRole
 }
 
@@ -29,12 +30,16 @@ export default function Header() {
   const [loading, setLoading] = useState(true)
   const [menuOpen, setMenuOpen] = useState(false)
   const [showChangePw, setShowChangePw] = useState(false)
+  const [showLeaguePanel, setShowLeaguePanel] = useState(false)
+  const [leagueTag, setLeagueTag] = useState('')
+  const [savingTag, setSavingTag] = useState(false)
+  const [savingReg, setSavingReg] = useState(false)
+  const [changingPw, setChangingPw] = useState(false)
   const [newPw, setNewPw] = useState('')
   const [confirmPw, setConfirmPw] = useState('')
-  const [changingPw, setChangingPw] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
-  // Đổi mật khẩu của chính mình
+  // ---- Đổi mật khẩu của chính mình ----
   const handleChangePassword = async () => {
     if (newPw.length < 6) {
       toast.error('Mật khẩu phải có ít nhất 6 ký tự')
@@ -58,7 +63,7 @@ export default function Header() {
     setChangingPw(false)
   }
 
-  // Đóng menu khi click ra ngoài
+  // ---- Đóng menu khi click ra ngoài ----
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
@@ -69,9 +74,12 @@ export default function Header() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
+  // ---- Nạp thông tin user đang đăng nhập ----
   useEffect(() => {
     async function loadUser() {
-      const { data: { user: authUser } } = await supabase.auth.getUser()
+      const {
+        data: { user: authUser },
+      } = await supabase.auth.getUser()
 
       if (!authUser) {
         setLoading(false)
@@ -92,14 +100,25 @@ export default function Header() {
         if (profile.name) displayName = profile.name
       }
 
-      setUser({
-        email: displayName,
-        role,
-      })
+      setUser({ email: authUser.email ?? '', displayName, role })
       setLoading(false)
     }
     loadUser()
   }, [supabase])
+
+  // ---- Giải đấu: nạp tag clan đã lưu ----
+  useEffect(() => {
+    async function loadLeagueTag() {
+      if (!user?.email) return
+      const { data } = await supabase
+        .from('profiles')
+        .select('tag')
+        .eq('email', user.email)
+        .single()
+      if (data?.tag) setLeagueTag(data.tag)
+    }
+    loadLeagueTag()
+  }, [user?.email, supabase])
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
@@ -107,6 +126,61 @@ export default function Header() {
     toast.success('Đã đăng xuất')
     router.push('/auth/login')
     router.refresh()
+  }
+
+  // ---- Lưu tag vào profiles ----
+  const saveTag = async () => {
+    if (!leagueTag.trim()) {
+      toast.error('Vui lòng nhập tag clan')
+      return
+    }
+    setSavingTag(true)
+    const { data } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('email', user?.email ?? '')
+      .single()
+    if (!data) {
+      toast.error('Không tìm thấy tài khoản hiện tại')
+      setSavingTag(false)
+      return
+    }
+    const { error } = await supabase
+      .from('profiles')
+      .update({ tag: leagueTag.trim() })
+      .eq('id', data.id)
+    if (error) {
+      toast.error('Lưu tag thất bại: ' + error.message)
+    } else {
+      toast.success('Đã lưu tag thành công!')
+    }
+    setSavingTag(false)
+  }
+
+  // ---- Đăng ký giải đấu: lấy member từ API COC và gom theo rank ----
+  const handleRegisterLeague = async () => {
+    if (!leagueTag.trim()) {
+      toast.error('Vui lòng nhập tag clan trước khi đăng ký')
+      return
+    }
+    setSavingReg(true)
+    const res = await fetch('/api/admin/register-clan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tag: leagueTag.trim() }),
+    })
+    const data = await res.json()
+    if (!res.ok) {
+      toast.error(data.error || 'Đăng ký giải đấu thất bại')
+    } else {
+      toast.success(
+        `Đăng ký giải đấu thành công! Đã lấy ${data.participant_count ?? 0} thành viên.`,
+      )
+      setShowLeaguePanel(false)
+      setMenuOpen(false)
+      router.push('/league')
+    }
+    setSavingReg(false)
   }
 
   return (
@@ -148,9 +222,9 @@ export default function Header() {
                 className="flex items-center gap-2 rounded-md border border-stone-750 bg-stone-850 px-3 py-1.5 text-sm text-stone-300 transition-colors hover:border-gold-700 hover:text-gold-400"
               >
                 <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gold-600 text-xs font-bold text-stone-950">
-                  {(user.email[0] || '?').toUpperCase()}
+                  {(user.displayName[0] || '?').toUpperCase()}
                 </span>
-                <span className="hidden max-w-[120px] truncate sm:inline">{user.email}</span>
+                <span className="hidden max-w-[120px] truncate sm:inline">{user.displayName}</span>
                 <ChevronDown
                   className={`h-3.5 w-3.5 text-stone-500 transition-transform ${menuOpen ? 'rotate-180' : ''}`}
                 />
@@ -158,9 +232,9 @@ export default function Header() {
 
               {/* Dropdown menu */}
               {menuOpen && (
-                <div className="absolute right-0 z-50 mt-2 w-56 overflow-hidden rounded-lg border border-stone-750 bg-stone-900 shadow-xl shadow-black/50">
+                <div className="absolute right-0 z-50 mt-2 w-64 overflow-hidden rounded-lg border border-stone-750 bg-stone-900 shadow-xl shadow-black/50">
                   <div className="border-b border-stone-750 px-4 py-2.5">
-                    <p className="truncate text-sm font-medium text-stone-200">{user.email}</p>
+                    <p className="truncate text-sm font-medium text-stone-200">{user.displayName}</p>
                     <p className="text-xs text-stone-500">
                       {user.role === 'super_admin'
                         ? 'Super Admin'
@@ -179,14 +253,58 @@ export default function Header() {
                     Giải đấu CWL
                   </Link>
 
-                  <Link
-                    href="/tournament"
-                    onClick={() => setMenuOpen(false)}
-                    className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-stone-300 transition-colors hover:bg-stone-800 hover:text-gold-400"
+                  {/* Menu Giải đấu - bật/tắt form đăng ký */}
+                  <button
+                    onClick={() => setShowLeaguePanel((v) => !v)}
+                    className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm text-stone-300 transition-colors hover:bg-stone-800 hover:text-gold-400"
                   >
-                    <Swords className="h-4 w-4" />
+                    <Play className="h-4 w-4" />
                     Giải đấu
-                  </Link>
+                  </button>
+
+                  {showLeaguePanel && (
+                    <div className="space-y-3 border-t border-stone-750 px-4 py-4">
+                      <p className="text-xs text-stone-500">Đăng ký cho tài khoản hiện tại</p>
+
+                      <div className="flex gap-2">
+                        <input
+                          value={leagueTag}
+                          onChange={(e) => setLeagueTag(e.target.value)}
+                          placeholder="Tag clan (VD: #9LR8C8P2C)"
+                          className="coc-input w-full rounded-md px-3 py-2 text-sm"
+                        />
+                        <button
+                          onClick={saveTag}
+                          className="btn-gold flex items-center gap-2 rounded-md px-3 py-2 text-sm"
+                          disabled={savingTag}
+                        >
+                          {savingTag && <Loader2 className="h-4 w-4 animate-spin" />}
+                          Lưu tag
+                        </button>
+                      </div>
+
+                      <button
+                        onClick={handleRegisterLeague}
+                        disabled={savingReg || !leagueTag.trim()}
+                        className="btn-gold flex w-full items-center justify-center gap-2 rounded-md px-4 py-2 text-sm disabled:opacity-50"
+                      >
+                        {savingReg ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Play className="h-4 w-4" />
+                        )}
+                        Đăng ký giải đấu
+                      </button>
+
+                      <Link
+                        href="/league"
+                        onClick={() => setMenuOpen(false)}
+                        className="flex w-full items-center justify-center gap-2 rounded-md border border-stone-750 px-4 py-2 text-sm text-stone-400 transition-colors hover:text-gold-400"
+                      >
+                        Xem bảng ghép đấu
+                      </Link>
+                    </div>
+                  )}
 
                   {(user.role === 'admin' || user.role === 'super_admin') && (
                     <Link
@@ -225,7 +343,7 @@ export default function Header() {
                 </div>
               )}
             </div>
-          ) : null /* Không login → không hiển thị gì (middleware sẽ redirect) */}
+          ) : null}
         </nav>
       </div>
 
@@ -270,7 +388,7 @@ export default function Header() {
             <div className="mt-4 flex justify-end gap-3">
               <button
                 onClick={() => setShowChangePw(false)}
-                className="rounded-md border border-stone-750 px-4 py-2 text-sm text-stone-400 hover:text-stone-200 transition-colors"
+                className="rounded-md border border-stone-750 px-4 py-2 text-sm text-stone-400 transition-colors hover:text-stone-200"
               >
                 Hủy
               </button>

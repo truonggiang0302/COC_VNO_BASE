@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
-import { Plus, LogOut, Shield, Pencil, Trash2, ExternalLink, Download, Star, UserCog, LayoutGrid, Home, Users } from 'lucide-react'
+import { Plus, LogOut, Shield, Pencil, Trash2, ExternalLink, Download, Star, UserCog, LayoutGrid, Home, Users, Key } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
 import type { Base, UserRole } from '@/types'
 import { BASE_TYPE_COLORS } from '@/types'
@@ -12,6 +12,7 @@ import BaseFormModal from './BaseFormModal'
 import DeleteConfirmModal from './DeleteConfirmModal'
 import UserManage from './UserManage'
 import ClanManage from './ClanManage'
+import ApiConfigManage from './ApiConfigManage'
 
 interface Props {
   initialBases: Base[]
@@ -20,7 +21,7 @@ interface Props {
   userRole: UserRole
 }
 
-type Tab = 'bases' | 'users' | 'clan'
+type Tab = 'bases' | 'users' | 'clan' | 'api'
 
 export default function DashboardClient({ initialBases, error, userEmail, userRole }: Props) {
   const router = useRouter()
@@ -151,6 +152,20 @@ export default function DashboardClient({ initialBases, error, userEmail, userRo
             <Users className="h-3.5 w-3.5" />
             Quản lý Clan
           </button>
+          {(isSuperAdmin || userRole === 'admin') && (
+            <button
+              onClick={() => setActiveTab('api')}
+              className={cn(
+                'flex items-center gap-2 rounded-md px-4 py-2 text-xs font-semibold transition-colors',
+                activeTab === 'api'
+                  ? 'bg-gold-800/40 text-gold-400'
+                  : 'text-stone-500 hover:text-stone-300',
+              )}
+            >
+              <Key className="h-3.5 w-3.5" />
+              Quản lý API
+            </button>
+          )}
         </div>
 
         {/* Tab content */}
@@ -278,6 +293,7 @@ export default function DashboardClient({ initialBases, error, userEmail, userRo
 
         {activeTab === 'users' && (isSuperAdmin || userRole === 'admin') && <UserManage />}
         {activeTab === 'clan' && <ClanManage />}
+        {activeTab === 'api' && (isSuperAdmin || userRole === 'admin') && <ApiConfigManage />}
       </main>
 
       {/* Modals */}

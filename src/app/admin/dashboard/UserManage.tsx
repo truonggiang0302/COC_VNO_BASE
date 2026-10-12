@@ -20,9 +20,13 @@ const ROLE_COLORS: Record<UserRole, string> = {
   viewer: 'bg-stone-800 text-stone-400 border border-stone-700',
 }
 
+type UserDisplay = Profile & {
+  tag?: string
+}
+
 export default function UserManage() {
   const supabase = createClient()
-  const [users, setUsers] = useState<Profile[]>([])
+  const [users, setUsers] = useState<UserDisplay[]>([])
   const [loading, setLoading] = useState(true)
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [newEmail, setNewEmail] = useState('')
@@ -50,7 +54,7 @@ export default function UserManage() {
     if (error) {
       toast.error('Không thể tải danh sách user')
     } else {
-      setUsers(data as Profile[])
+      setUsers(data as UserDisplay[])
     }
     setLoading(false)
   }
@@ -307,6 +311,7 @@ export default function UserManage() {
             <thead>
               <tr className="border-b border-stone-750 bg-stone-950/30">
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-stone-500">Email</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-stone-500">Tag</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-stone-500">Tên</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-stone-500">Vai trò</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-stone-500 hidden sm:table-cell">Ngày tạo</th>
@@ -337,6 +342,9 @@ export default function UserManage() {
                   >
                     <td className="px-4 py-3 font-medium text-stone-200 max-w-[200px] truncate">
                       {user.email}
+                    </td>
+                    <td className="px-4 py-3 text-stone-300 text-xs">
+                      <span className="font-mono text-xs text-stone-400">{user.tag || <span className="italic text-stone-600">-</span>}</span>
                     </td>
                     <td className="px-4 py-3 text-stone-300 text-xs">
                       {editingName === user.id ? (
