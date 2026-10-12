@@ -10,7 +10,7 @@ const supabaseAdmin = createClient(
 
 export async function POST(request: Request) {
   try {
-    const { userId, role, name, password } = await request.json()
+    const { userId, role, name, tag, password } = await request.json()
 
     if (!userId) {
       return NextResponse.json({ error: 'Thiếu userId' }, { status: 400 })
@@ -61,6 +61,15 @@ export async function POST(request: Request) {
 
     if (name !== undefined) {
       updateData.name = name.trim()
+    }
+
+    if (tag !== undefined) {
+      const normalized = tag.trim().replace(/\s/g, '')
+      if (normalized && !normalized.startsWith('#')) {
+        updateData.tag = '#' + normalized.toUpperCase()
+      } else {
+        updateData.tag = normalized.toUpperCase()
+      }
     }
 
     if (Object.keys(updateData).length === 0 && !password) {

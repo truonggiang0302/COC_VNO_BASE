@@ -31,8 +31,6 @@ export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [showChangePw, setShowChangePw] = useState(false)
   const [showLeaguePanel, setShowLeaguePanel] = useState(false)
-  const [leagueTag, setLeagueTag] = useState('')
-  const [savingTag, setSavingTag] = useState(false)
   const [savingReg, setSavingReg] = useState(false)
   const [changingPw, setChangingPw] = useState(false)
   const [newPw, setNewPw] = useState('')
@@ -107,18 +105,6 @@ export default function Header() {
   }, [supabase])
 
   // ---- Giải đấu: nạp tag clan đã lưu ----
-  useEffect(() => {
-    async function loadLeagueTag() {
-      if (!user?.email) return
-      const { data } = await supabase
-        .from('profiles')
-        .select('tag')
-        .eq('email', user.email)
-        .single()
-      if (data?.tag) setLeagueTag(data.tag)
-    }
-    loadLeagueTag()
-  }, [user?.email, supabase])
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
@@ -128,46 +114,13 @@ export default function Header() {
     router.refresh()
   }
 
-  // ---- Lưu tag vào profiles ----
-  const saveTag = async () => {
-    if (!leagueTag.trim()) {
-      toast.error('Vui lòng nhập tag clan')
-      return
-    }
-    setSavingTag(true)
-    const { data } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('email', user?.email ?? '')
-      .single()
-    if (!data) {
-      toast.error('Không tìm thấy tài khoản hiện tại')
-      setSavingTag(false)
-      return
-    }
-    const { error } = await supabase
-      .from('profiles')
-      .update({ tag: leagueTag.trim() })
-      .eq('id', data.id)
-    if (error) {
-      toast.error('Lưu tag thất bại: ' + error.message)
-    } else {
-      toast.success('Đã lưu tag thành công!')
-    }
-    setSavingTag(false)
-  }
-
   // ---- Đăng ký giải đấu: lấy member từ API COC và gom theo rank ----
   const handleRegisterLeague = async () => {
-    if (!leagueTag.trim()) {
-      toast.error('Vui lòng nhập tag clan trước khi đăng ký')
-      return
-    }
     setSavingReg(true)
     const res = await fetch('/api/admin/register-clan', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tag: leagueTag.trim() }),
+      body: JSON.stringify({}),
     })
     const data = await res.json()
     if (!res.ok) {
@@ -266,26 +219,9 @@ export default function Header() {
                     <div className="space-y-3 border-t border-stone-750 px-4 py-4">
                       <p className="text-xs text-stone-500">Đăng ký cho tài khoản hiện tại</p>
 
-                      <div className="flex gap-2">
-                        <input
-                          value={leagueTag}
-                          onChange={(e) => setLeagueTag(e.target.value)}
-                          placeholder="Tag clan (VD: #9LR8C8P2C)"
-                          className="coc-input w-full rounded-md px-3 py-2 text-sm"
-                        />
-                        <button
-                          onClick={saveTag}
-                          className="btn-gold flex items-center gap-2 rounded-md px-3 py-2 text-sm"
-                          disabled={savingTag}
-                        >
-                          {savingTag && <Loader2 className="h-4 w-4 animate-spin" />}
-                          Lưu tag
-                        </button>
-                      </div>
-
                       <button
                         onClick={handleRegisterLeague}
-                        disabled={savingReg || !leagueTag.trim()}
+                        disabled={savingReg}
                         className="btn-gold flex w-full items-center justify-center gap-2 rounded-md px-4 py-2 text-sm disabled:opacity-50"
                       >
                         {savingReg ? (

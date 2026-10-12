@@ -8,13 +8,15 @@ const supabaseAdmin = createClient(
   { auth: { autoRefreshToken: false, persistSession: false } },
 )
 
+// Tag clan cố định — muốn đổi clan thì sửa biến này (hoặc set env COC_CLAN_TAG)
+const CLAN_TAG = process.env.COC_CLAN_TAG ?? '#PLUCPCYG'
+
 export async function POST(request: Request) {
   try {
-    const { tag } = await request.json()
-    if (!tag || !tag.trim()) {
-      return NextResponse.json({ error: 'Thiếu tag clan' }, { status: 400 })
-    }
-    const clanTag = tag.trim().startsWith('#') ? tag.trim() : '#' + tag.trim()
+    // Body được phép gửi rỗng, tag lấy từ hằng số CLAN_TAG ở trên
+    await request.json().catch(() => ({}))
+
+    const clanTag = CLAN_TAG.trim().startsWith('#') ? CLAN_TAG.trim() : '#' + CLAN_TAG.trim()
 
     // 1. Xác định user đang đăng nhập
     const supabase = await createServerSupabase()

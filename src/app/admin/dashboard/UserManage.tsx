@@ -37,6 +37,9 @@ export default function UserManage() {
   const [editingName, setEditingName] = useState<string | null>(null)
   const [editingNameValue, setEditingNameValue] = useState('')
   const [savingName, setSavingName] = useState(false)
+  const [editingTag, setEditingTag] = useState<string | null>(null)
+  const [editingTagValue, setEditingTagValue] = useState('')
+  const [savingTag, setSavingTag] = useState(false)
   const [myUserId, setMyUserId] = useState<string | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Profile | null>(null)
   const [deleting, setDeleting] = useState(false)
@@ -93,6 +96,37 @@ export default function UserManage() {
       loadUsers()
     }
     setSavingName(false)
+  }
+
+  const handleStartEditTag = (user: UserDisplay) => {
+    setEditingTag(user.id)
+    setEditingTagValue(user.tag ?? '')
+  }
+
+  const handleCancelEditTag = () => {
+    setEditingTag(null)
+    setEditingTagValue('')
+  }
+
+  const handleSaveTag = async (userId: string) => {
+    setSavingTag(true)
+    const res = await fetch('/api/admin/update-profile', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, tag: editingTagValue.trim() }),
+    })
+
+    const data = await res.json()
+
+    if (!res.ok) {
+      toast.error('Cập nhật tag thất bại: ' + data.error)
+    } else {
+      toast.success('Đã cập nhật tag!')
+      setEditingTag(null)
+      setEditingTagValue('')
+      loadUsers()
+    }
+    setSavingTag(false)
   }
 
   useEffect(() => {
@@ -344,7 +378,47 @@ export default function UserManage() {
                       {user.email}
                     </td>
                     <td className="px-4 py-3 text-stone-300 text-xs">
-                      <span className="font-mono text-xs text-stone-400">{user.tag || <span className="italic text-stone-600">-</span>}</span>
+                      {editingTag === user.id ? (
+                        <div className="flex items-center gap-1">
+                          <input
+                            type="text"
+                            value={editingTagValue}
+                            onChange={e => setEditingTagValue(e.target.value)}
+                            placeholder="#9LR8C8P2C"
+                            className="coc-input w-full min-w-[110px] rounded px-1.5 py-1 font-mono text-xs"
+                            autoFocus
+                            onKeyDown={e => {
+                              if (e.key === 'Enter') handleSaveTag(user.id)
+                              if (e.key === 'Escape') handleCancelEditTag()
+                            }}
+                          />
+                          <button
+                            onClick={() => handleSaveTag(user.id)}
+                            disabled={savingTag}
+                            className="text-army-400 hover:text-army-300 transition-colors"
+                          >
+                            <Check className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            onClick={handleCancelEditTag}
+                            className="text-stone-500 hover:text-stone-300 transition-colors"
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-mono text-xs text-stone-400">
+                            {user.tag || <span className="italic text-stone-600">-</span>}
+                          </span>
+                          <button
+                            onClick={() => handleStartEditTag(user)}
+                            className="text-stone-600 hover:text-gold-400 transition-colors opacity-0 group-hover:opacity-100"
+                          >
+                            <Pencil className="h-3 w-3" />
+                          </button>
+                        </div>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-stone-300 text-xs">
                       {editingName === user.id ? (
