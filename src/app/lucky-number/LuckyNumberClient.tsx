@@ -13,17 +13,19 @@ interface Pick {
 
 interface Winner extends Pick {
   distance: number
+  round?: number
 }
 
 interface LuckyData {
   month: string
   isClosed: boolean
   winningNumber: number | null
+  winningNumber2: number | null
   winnerSlots: number
   picks: Pick[]
 }
 
-const MAX_PICKS = 5
+const MAX_PICKS = 20
 
 export default function LuckyNumberClient() {
   const [data, setData] = useState<LuckyData | null>(null)
@@ -35,10 +37,12 @@ export default function LuckyNumberClient() {
   const [userRole, setUserRole] = useState<'viewer' | 'admin' | 'super_admin'>('viewer')
   const [saving, setSaving] = useState(false)
   const [winningInput, setWinningInput] = useState('')
+  const [winningInput2, setWinningInput2] = useState('')
   const [slotsInput, setSlotsInput] = useState<string>('') // cấu hình số người trúng (chưa lưu)
   const [winnerSlots, setWinnerSlots] = useState(2)
   const [winners, setWinners] = useState<Winner[] | null>(null)
   const [lastWinningNumber, setLastWinningNumber] = useState<number | null>(null)
+  const [lastWinningNumber2, setLastWinningNumber2] = useState<number | null>(null)
   const [showWinnerModal, setShowWinnerModal] = useState(false)
 
   const isAdmin = userRole === 'admin' || userRole === 'super_admin'
@@ -73,6 +77,7 @@ export default function LuckyNumberClient() {
         setSelected(mine)
       }
       if (lucky.winningNumber) setLastWinningNumber(lucky.winningNumber)
+      if (lucky.winningNumber2) setLastWinningNumber2(lucky.winningNumber2)
       if (typeof lucky.winnerSlots === 'number' && lucky.winnerSlots >= 1) {
         setWinnerSlots(lucky.winnerSlots)
         setSlotsInput(String(lucky.winnerSlots))
@@ -168,20 +173,32 @@ export default function LuckyNumberClient() {
   }
 
   const handleFindWinners = async () => {
-    const num = Number(winningInput)
-    if (!Number.isInteger(num) || num < 1 || num > 99) {
-      toast.error('Nhập số may mắn từ 1 đến 99')
+    const num1 = Number(winningInput)
+    const num2 = Number(winningInput2)
+    if (!Number.isInteger(num1) || num1 < 1 || num1 > 99) {
+      toast.error('Nhập số may mắn 1 từ 1 đến 99')
+      return
+    }
+    if (!Number.isInteger(num2) || num2 < 1 || num2 > 99) {
+      toast.error('Nhập số may mắn 2 từ 1 đến 99')
       return
     }
     // Dùng cấu hình đã lưu (nếu ô nhập đang sửa thì lấy giá trị đó)
     const pendingSlots = Number(slotsInput)
     const effectiveSlots = Number.isInteger(pendingSlots) && pendingSlots >= 1 ? pendingSlots : winnerSlots
-    const json = await adminAction('winning', { winningNumber: num, winnerSlots: effectiveSlots })
+    const json = await adminAction('winning', { winningNumber: num1, winningNumber2: num2, winnerSlots: effectiveSlots })
     if (json) {
-      setWinners(json.winners)
-      setLastWinningNumber(json.winningNumber)
+      // Gộp winners từ 2 vòng để hiển thị trong modal
+      const allWinners = [
+        ...json.round1.winners.map((w: Winner) => ({ ...w, round: 1 })),
+        ...json.round2.winners.map((w: Winner) => ({ ...w, round: 2 })),
+      ]
+      setWinners(allWinners)
+      setLastWinningNumber(json.round1.winningNumber)
+      setLastWinningNumber2(json.round2.winningNumber)
       setShowWinnerModal(true)
       setWinningInput('')
+      setWinningInput2('')
       await load()
     }
   }
@@ -193,6 +210,7 @@ export default function LuckyNumberClient() {
       toast.success(closed ? 'Đã mở lại đăng ký' : 'Đã đóng đăng ký')
       if (closed) {
         setLastWinningNumber(null)
+        setLastWinningNumber2(null)
         setWinners(null)
       }
       await load()
@@ -242,8 +260,8 @@ export default function LuckyNumberClient() {
           Đăng ký số may mắn CWL
         </h1>
         <p className="mt-2 text-sm text-stone-400">
-          Chọn tối đa <span className="text-gold-400">5 số</span> (1–99). Hai thành viên có số sát
-          nhất với con số may mắn sẽ trúng giải!
+          Chọn tối đa <span className="text-gold-400">20 số</span> (1–99). Hai thành viên có số sát
+          nhất với 2 con số may mắn của Admin sẽ trúng giải!
           {data && (
             <span className="ml-2 text-stone-500">
               (Tháng <span className="font-mono">{data.month}</span>)
@@ -254,7 +272,7 @@ export default function LuckyNumberClient() {
           <div className="mt-3 inline-flex items-center gap-2 rounded-md border border-red-800 bg-red-950/50 px-4 py-1.5 text-sm text-red-400">
             <Lock className="h-4 w-4" />
             {lastWinningNumber
-              ? `Đã kết thúc — số may mắn: ${lastWinningNumber}`
+              ? `Đã kết thúc — số may mắn: ${lastWinningNumber}${lastWinningNumber2 ? `, ${lastWinningNumber2}` : ''}`
               : 'Đã đóng đăng ký'}
           </div>
         )}
@@ -380,7 +398,7 @@ export default function LuckyNumberClient() {
                               ))}
                           </div>
                         </td>
-                        <td className="px-5 py-2.5 text-right text-stone-500">{u.numbers.length}/5</td>
+                        <td className="px-5 py-2.5 text-right text-stone-500">{u.numbers.length}/20</td>
                       </tr>
                     ))}
                     {byUser.length === 0 && (
@@ -405,9 +423,9 @@ export default function LuckyNumberClient() {
                   Quản trị Event
                 </h2>
 
-                {/* Nhập số may mắn */}
+                {/* Nhập 2 số may mắn */}
                 <label className="mb-1.5 block text-sm text-stone-400">
-                  Con số may mắn (từ kết quả ngoài)
+                  2 con số may mắn (từ kết quả ngoài)
                 </label>
                 <div className="flex gap-2">
                   <input
@@ -417,6 +435,15 @@ export default function LuckyNumberClient() {
                     value={winningInput}
                     onChange={(e) => setWinningInput(e.target.value)}
                     placeholder="VD: 50"
+                    className="w-28 rounded-md border border-stone-700 bg-stone-850 px-3 py-2 text-sm text-stone-200 placeholder-stone-600 focus:border-gold-700 focus:outline-none"
+                  />
+                  <input
+                    type="number"
+                    min={1}
+                    max={99}
+                    value={winningInput2}
+                    onChange={(e) => setWinningInput2(e.target.value)}
+                    placeholder="VD: 70"
                     className="w-28 rounded-md border border-stone-700 bg-stone-850 px-3 py-2 text-sm text-stone-200 placeholder-stone-600 focus:border-gold-700 focus:outline-none"
                   />
                   <button
@@ -577,30 +604,67 @@ export default function LuckyNumberClient() {
               <Trophy className="mx-auto mb-2 h-12 w-12 text-gold-400" />
               <h3 className="gold-shimmer text-2xl font-bold">Chúc mừng người trúng giải!</h3>
               <p className="mt-1 text-sm text-stone-400">
-                Số may mắn:{' '}
+                2 số may mắn:{' '}
                 <span className="font-mono text-lg font-bold text-gold-400">
-                  {lastWinningNumber}
+                  {lastWinningNumber} và {lastWinningNumber2}
                 </span>
               </p>
             </div>
-            <div className="space-y-2">
-              {winners.map((w, i) => (
-                <div
-                  key={`${w.user_id}-${w.number}`}
-                  className="flex items-center justify-between rounded-lg border border-gold-800 bg-gold-950/30 px-4 py-3"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-gold-600 text-sm font-bold text-stone-950">
-                      {i + 1}
-                    </span>
-                    <span className="font-medium text-stone-200">{w.user_name}</span>
-                  </div>
-                  <div className="text-right">
-                    <div className="font-mono text-lg font-bold text-gold-400">{w.number}</div>
-                    <div className="text-xs text-stone-500">cách {w.distance} số</div>
-                  </div>
-                </div>
-              ))}
+
+            {/* Vòng 1 */}
+            <div className="mb-4">
+              <h4 className="flex items-center gap-2 mb-2 text-sm font-semibold text-gold-400">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gold-600 text-stone-950 text-xs font-bold">1</span>
+                Người trúng vòng 1 (gần số {lastWinningNumber} nhất)
+              </h4>
+              <div className="space-y-1">
+                {winners.filter((w) => w.round === 1).length > 0 ? (
+                  winners.filter((w) => w.round === 1).map((w) => (
+                    <div
+                      key={`${w.user_id}-${w.number}-1`}
+                      className="flex items-center justify-between rounded-lg border border-gold-800 bg-gold-950/30 px-3 py-2"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-stone-200">{w.user_name}</span>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-mono text-lg font-bold text-gold-400">{w.number}</div>
+                        <div className="text-xs text-stone-500">cách {w.distance} số</div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-2 text-xs text-stone-500">Không có ai trúng vòng này</div>
+                )}
+              </div>
+            </div>
+
+            {/* Vòng 2 */}
+            <div>
+              <h4 className="flex items-center gap-2 mb-2 text-sm font-semibold text-gold-400">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-stone-600 text-stone-950 text-xs font-bold">2</span>
+                Người trúng vòng 2 (gần số {lastWinningNumber2} nhất, trừ người đã trúng vòng 1)
+              </h4>
+              <div className="space-y-1">
+                {winners.filter((w) => w.round === 2).length > 0 ? (
+                  winners.filter((w) => w.round === 2).map((w) => (
+                    <div
+                      key={`${w.user_id}-${w.number}-2`}
+                      className="flex items-center justify-between rounded-lg border border-gold-800 bg-gold-950/30 px-3 py-2"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-stone-200">{w.user_name}</span>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-mono text-lg font-bold text-gold-400">{w.number}</div>
+                        <div className="text-xs text-stone-500">cách {w.distance} số</div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-2 text-xs text-stone-500">Không có ai trúng vòng này</div>
+                )}
+              </div>
             </div>
           </div>
         </div>

@@ -43,6 +43,7 @@ export async function GET() {
       month,
       isClosed: stateRes.data?.is_closed ?? false,
       winningNumber: stateRes.data?.winning_number ?? null,
+      winningNumber2: stateRes.data?.winning_number_2 ?? null,
       winnerSlots: stateRes.data?.winner_slots ?? 2,
       picks: picksRes.data ?? [],
     })
@@ -67,8 +68,8 @@ export async function POST(request: Request) {
     if (!Array.isArray(numbers) || numbers.length === 0) {
       return NextResponse.json({ error: 'Vui lòng chọn ít nhất 1 số' }, { status: 400 })
     }
-    if (numbers.length > 5) {
-      return NextResponse.json({ error: 'Chỉ được chọn tối đa 5 số' }, { status: 400 })
+    if (numbers.length > 20) {
+      return NextResponse.json({ error: 'Chỉ được chọn tối đa 20 số' }, { status: 400 })
     }
     const valid = numbers.every(
       (n) => Number.isInteger(n) && n >= 1 && n <= 99,

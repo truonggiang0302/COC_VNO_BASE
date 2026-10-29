@@ -14,21 +14,40 @@ interface WinnerPick {
   number: number
 }
 
+interface RoundResult {
+  winningNumber: number
+  winners: Array<WinnerPick & { distance: number }>
+  remaining: WinnerPick[]
+}
+
 /**
- * Tìm người trúng giải:
- * - `slots` người có khoảng cách nhỏ nhất với số may mắn
- * - Nếu hòa khoảng cách thì tất cả người hòa cùng trúng (có thể >slots)
+ * Vòng quét 1 số:
+ * - Tính khoảng cách nhỏ nhất từ mỗi user đến winningNumber (mỗi user có nhiều số)
+ * - Lấy những user có khoảng cách nhỏ nhất (hoà lấy tất cả)
+ * - Loại các user đó khỏi danh sách picks còn lại
  */
-function findWinners(picks: WinnerPick[], winningNumber: number, slots: number) {
-  const distances = [...new Set(picks.map((p) => Math.abs(p.number - winningNumber)))].sort(
-    (a, b) => a - b,
-  )
-  const topDistances = distances.slice(0, Math.max(1, slots)) // các khoảng cách nhỏ nhất (trùng nhau chỉ tính 1)
-  const winners = picks
-    .filter((p) => topDistances.includes(Math.abs(p.number - winningNumber)))
-    .map((p) => ({ ...p, distance: Math.abs(p.number - winningNumber) }))
-    .sort((a, b) => a.distance - b.distance)
-  return { winners, topDistances }
+function scanRound(picks: WinnerPick[], winningNumber: number): RoundResult {
+  // Tìm số gần nhất của mỗi user với winningNumber
+  const bestByUser = new Map<string, WinnerPick & { distance: number }>()
+  picks.forEach((p) => {
+    const distance = Math.abs(p.number - winningNumber)
+    const existing = bestByUser.get(p.user_id)
+    if (!existing || distance < existing.distance) {
+      bestByUser.set(p.user_id, { ...p, distance })
+    }
+  })
+
+  const users = Array.from(bestByUser.values())
+  if (users.length === 0) {
+    return { winningNumber, winners: [], remaining: picks }
+  }
+
+  const minDistance = Math.min(...users.map((u) => u.distance))
+  const winners = users.filter((u) => u.distance === minDistance).sort((a, b) => a.number - b.number)
+  const winnerIds = new Set(winners.map((w) => w.user_id))
+  const remaining = picks.filter((p) => !winnerIds.has(p.user_id))
+
+  return { winningNumber, winners, remaining }
 }
 
 /** Tháng hiện tại theo UTC, dạng 'YYYY-MM' */
@@ -59,7 +78,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Không có quyền' }, { status: 403 })
     }
 
-    const { action, winningNumber, winnerSlots } = await request.json()
+    const { action, winningNumber, winningNumber2, winnerSlots } = await request.json()
     const month = currentMonth()
 
     // Validate số suất trúng (dùng chung cho set-slots và winning)
@@ -96,17 +115,24 @@ export async function POST(request: Request) {
       case 'open': {
         const { error } = await supabaseAdmin
           .from('lucky_state')
-          .upsert({ month, is_closed: false, winning_number: null })
+          .upsert({ month, is_closed: false, winning_number: null, winning_number_2: null })
         if (error) return NextResponse.json({ error: error.message }, { status: 400 })
         return NextResponse.json({ success: true })
       }
 
-      // Nhập số may mắn + tìm người trúng
+      // Nhập 2 số may mắn + tìm người trúng từng lượt
       case 'winning': {
-        const num = Number(winningNumber)
-        if (!Number.isInteger(num) || num < 1 || num > 99) {
+        const num1 = Number(winningNumber)
+        const num2 = Number(winningNumber2)
+        if (!Number.isInteger(num1) || num1 < 1 || num1 > 99) {
           return NextResponse.json(
-            { error: 'Số may mắn phải là số nguyên từ 1 đến 99' },
+            { error: 'Số may mắn 1 phải là số nguyên từ 1 đến 99' },
+            { status: 400 },
+          )
+        }
+        if (!Number.isInteger(num2) || num2 < 1 || num2 > 99) {
+          return NextResponse.json(
+            { error: 'Số may mắn 2 phải là số nguyên từ 1 đến 99' },
             { status: 400 },
           )
         }
@@ -123,14 +149,18 @@ export async function POST(request: Request) {
           )
         }
 
-        const { winners, topDistances } = findWinners(picks, num, slots)
+        // Vòng 1: quét số 1
+        const round1 = scanRound(picks, num1)
+        // Vòng 2: quét số 2 với người còn lại (loại người đã trúng vòng 1)
+        const round2 = scanRound(round1.remaining, num2)
 
         const { error } = await supabaseAdmin
           .from('lucky_state')
           .upsert({
             month,
             is_closed: true,
-            winning_number: num,
+            winning_number: num1,
+            winning_number_2: num2,
             winner_slots: slots,
             closed_at: new Date().toISOString(),
           })
@@ -138,9 +168,8 @@ export async function POST(request: Request) {
 
         return NextResponse.json({
           success: true,
-          winners,
-          topDistances,
-          winningNumber: num,
+          round1,
+          round2,
           winnerSlots: slots,
         })
       }

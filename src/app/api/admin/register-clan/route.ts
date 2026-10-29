@@ -51,7 +51,9 @@ export async function POST(request: Request) {
       )
     }
 
-    const url = `${configs.base_url}/v1/clans/${encodeURIComponent(clanTag)}/members`
+    // Chuẩn hóa base_url: bỏ dấu / ở cuối để tránh double slash
+    const baseUrl = configs.base_url.trim().replace(/\/+$/, '')
+    const url = `${baseUrl}/v1/clans/${encodeURIComponent(clanTag)}/members`
     const res = await fetch(url, {
       method: 'GET',
       headers: {
@@ -62,10 +64,14 @@ export async function POST(request: Request) {
 
     if (!res.ok) {
       const body = await res.json().catch(() => null)
-      return NextResponse.json(
-        { error: `Gọi API thất bại (${res.status}): ${body?.error || 'unknown'}` },
-        { status: 400 },
-      )
+      // API COC trả về { reason, message } — hãy hiển thị để dễ xử lý
+      let hint = body?.message || 'unknown'
+      if (res.status === 403) {
+        hint +=
+          ' — API key của COC bị giới hạn IP. Hãy vào developer.clashofclans.com, mục "My account" > chọn key > thêm IP của server vào whitelist (hoặc đặt whitelist trống nếu key cho phép).'
+      }
+      console.error('COC API error', res.status, body, 'url:', url)
+      return NextResponse.json({ error: `Gọi API thất bại (${res.status}): ${hint}` }, { status: 400 })
     }
 
     const members = await res.json()

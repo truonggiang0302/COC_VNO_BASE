@@ -65,3 +65,6 @@ CREATE INDEX IF NOT EXISTS idx_lucky_picks_user ON public.lucky_picks (user_id, 
 
 -- 5. Migration: so nguoi trung giai co cau hinh (mac dinh 2)
 ALTER TABLE public.lucky_state ADD COLUMN IF NOT EXISTS winner_slots INT NOT NULL DEFAULT 2;
+
+-- 6. Migration: them so may man thu 2
+ALTER TABLE public.lucky_state ADD COLUMN IF NOT EXISTS winning_number_2 INT CHECK (winning_number_2 IS NULL OR winning_number_2 BETWEEN 1 AND 99);
