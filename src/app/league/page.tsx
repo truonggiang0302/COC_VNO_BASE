@@ -3,7 +3,7 @@ import Header from '@/components/Header'
 import LeagueBracketClient from '@/components/LeagueBracketClient'
 
 export const metadata: Metadata = {
-  title: 'Bảng ghép đấu | CoC VNO Base Hub',
+  title: 'Bảng ghép đấu | VietNamOnline - COC Esports Clan',
   description: 'Xem bảng ghép đấu theo rank của giải đấu CWL',
 }
 

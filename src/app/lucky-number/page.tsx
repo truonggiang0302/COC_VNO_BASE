@@ -3,7 +3,7 @@ import Header from '@/components/Header'
 import LuckyNumberClient from './LuckyNumberClient'
 
 export const metadata: Metadata = {
-  title: 'Đăng ký số may mắn | CoC VNO Base Hub',
+  title: 'Đăng ký số may mắn | VietNamOnline - COC Esports Clan',
   description: 'Chọn số may mắn tham gia event CWL',
 }
 

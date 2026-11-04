@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
 import DashboardClient from './DashboardClient'
 
-export const metadata = { title: 'Dashboard – CoC Base Hub' }
+export const metadata = { title: 'Dashboard – VietNamOnline - COC Esports Clan' }
 
 export default async function DashboardPage() {
   const supabase = await createClient()

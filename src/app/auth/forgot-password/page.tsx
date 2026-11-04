@@ -1,6 +1,6 @@
 import ForgotPasswordForm from './ForgotPasswordForm'
 
-export const metadata = { title: 'Quên mật khẩu – CoC Base Hub' }
+export const metadata = { title: 'Quên mật khẩu – VietNamOnline - COC Esports Clan' }
 
 export default function ForgotPasswordPage() {
   return (

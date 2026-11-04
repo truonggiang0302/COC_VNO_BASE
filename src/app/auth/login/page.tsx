@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
 import LoginForm from './LoginForm'
 
-export const metadata = { title: 'Đăng nhập – CoC Base Hub' }
+export const metadata = { title: 'Đăng nhập – VietNamOnline - COC Esports Clan' }
 
 export default async function LoginPage() {
   const supabase = await createClient()

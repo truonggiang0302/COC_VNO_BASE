@@ -1,5 +1,5 @@
 -- ============================================================
--- CoC Base Hub – Supabase SQL Schema
+-- VietNamOnline - COC Esports Clan – Supabase SQL Schema
 -- Chạy trong SQL Editor của Supabase dashboard
 -- ============================================================
 

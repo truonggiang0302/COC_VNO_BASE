@@ -1,4 +1,4 @@
-# CoC Base Hub 🏰
+# VietNamOnline - COC Esports Clan 🏰
 
 Ứng dụng quản lý và chia sẻ Base Layout Clash of Clans, xây dựng bằng **Next.js 15** + **Supabase** + **Tailwind CSS**.
 

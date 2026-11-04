@@ -3,12 +3,12 @@ import { Toaster } from 'react-hot-toast'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'VietNamOnline',
+  title: 'VietNamOnline - COC Esports Clan',
   description:
-    'Tổng hợp và chia sẻ base layout Clash of Clans theo Town Hall, chiến thuật Farming, War, Trophy và nhiều hơn nữa.',
+    'Trang sinh hoạt chung của anh em Clan VietNamOnline. Tổng hợp base War/Legend, quản lý CWL và kết nối cộng đồng.',
   openGraph: {
-    title: 'CoC Base Hub',
-    description: 'Chia sẻ và tìm kiếm base CoC tốt nhất cho anh em VietNamOnline',
+    title: 'VietNamOnline - COC Esports Clan',
+    description: 'Trang sinh hoạt chung của anh em Clan VietNamOnline. Tổng hợp base War/Legend, quản lý CWL và kết nối cộng đồng.',
     type: 'website',
   },
 }
