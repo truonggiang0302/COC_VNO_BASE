@@ -52,7 +52,7 @@ export const BASE_TYPES: BaseType[] = [
   'CWL',
 ]
 
-export const TOWNHALL_LEVELS = Array.from({ length: 10 }, (_, i) => i + 9) // 9..18
+export const TOWNHALL_LEVELS = Array.from({ length: 11 }, (_, i) => i + 9) // 9..19
 
 export type ClanRole = 'leader' | 'co_leader' | 'elder' | 'member'
 
