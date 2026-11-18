@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useRef, type ChangeEvent } from 'react'
+import { useState, useRef, type ChangeEvent, type ClipboardEvent } from 'react'
 import toast from 'react-hot-toast'
-import { X, Upload, Loader2, Image as ImageIcon } from 'lucide-react'
+import { X, Upload, Loader2, Image as ImageIcon, Clipboard } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
 import type { Base, BaseType } from '@/types'
 import { BASE_TYPES, TOWNHALL_LEVELS } from '@/types'
@@ -18,6 +18,7 @@ export default function BaseFormModal({ base, onClose, onSaved }: Props) {
   const isNew = !base
   const supabase = createClient()
   const fileRef = useRef<HTMLInputElement>(null)
+  const pasteRef = useRef<HTMLTextAreaElement>(null)
 
   const [form, setForm] = useState({
     name: base?.name ?? '',
@@ -46,6 +47,39 @@ export default function BaseFormModal({ base, onClose, onSaved }: Props) {
     }
     setImageFile(file)
     setImagePreview(URL.createObjectURL(file))
+  }
+
+  const handlePaste = async (e: ClipboardEvent) => {
+    const items = e.clipboardData?.items
+    if (!items) return
+
+    // Ưu tiên lấy file ảnh từ clipboard
+    for (const item of items) {
+      if (item.type.startsWith('image/')) {
+        const file = item.getAsFile()
+        if (!file) continue
+        if (file.size > 5 * 1024 * 1024) {
+          toast.error('Ảnh quá lớn (tối đa 5 MB)')
+          return
+        }
+        e.preventDefault()
+        setImageFile(file)
+        setImagePreview(URL.createObjectURL(file))
+        toast.success('Đã dán ảnh từ clipboard')
+        return
+      }
+    }
+
+    // Nếu không có file ảnh, thử lấy text (URL ảnh)
+    const text = e.clipboardData?.getData('text')
+    if (text && text.startsWith('http') && /\.(jpg|jpeg|png|webp|gif)(\?|$)/i.test(text)) {
+      e.preventDefault()
+      setImageFile(null)
+      setImagePreview(text)
+      setForm(f => ({ ...f, image_url: text }))
+      toast.success('Đã dán link ảnh từ clipboard')
+      return
+    }
   }
 
   const uploadImage = async (): Promise<string> => {
@@ -132,6 +166,13 @@ export default function BaseFormModal({ base, onClose, onSaved }: Props) {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 overflow-y-auto p-6 max-h-[75vh]">
+          {/* Hidden paste zone for Ctrl+V image paste */}
+          <textarea
+            ref={pasteRef}
+            tabIndex={-1}
+            style={{ position: 'absolute', opacity: 0, pointerEvents: 'none' }}
+            onPaste={handlePaste}
+          />
           {/* Image upload */}
           <div>
             <label className="mb-1.5 block text-xs font-semibold uppercase tracking-widest text-stone-400">
@@ -143,6 +184,7 @@ export default function BaseFormModal({ base, onClose, onSaved }: Props) {
                 imagePreview && 'border-solid border-gold-800',
               )}
               onClick={() => fileRef.current?.click()}
+              onPaste={handlePaste}
             >
               {imagePreview ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -166,13 +208,23 @@ export default function BaseFormModal({ base, onClose, onSaved }: Props) {
               onChange={handleFileChange}
             />
             {imagePreview && (
-              <button
-                type="button"
-                onClick={() => { setImageFile(null); setImagePreview(''); setForm(f => ({ ...f, image_url: '' })) }}
-                className="mt-1 text-xs text-stone-500 hover:text-red-400"
-              >
-                Xóa ảnh
-              </button>
+              <div className="flex flex-col items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => { setImageFile(null); setImagePreview(''); setForm(f => ({ ...f, image_url: '' })) }}
+                  className="mt-1 text-xs text-stone-500 hover:text-red-400"
+                >
+                  Xóa ảnh
+                </button>
+                <button
+                  type="button"
+                  onClick={() => pasteRef.current?.focus()}
+                  className="mt-0.5 text-xs text-stone-400 hover:text-stone-200"
+                  title="Focus vào vùng paste, sau đó nhấn Ctrl+V để dán ảnh"
+                >
+                  <Clipboard className="h-3 w-3 mr-1" /> Paste từ clipboard
+                </button>
+              </div>
             )}
           </div>
 
