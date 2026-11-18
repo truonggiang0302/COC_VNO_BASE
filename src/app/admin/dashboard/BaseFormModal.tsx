@@ -21,7 +21,7 @@ export default function BaseFormModal({ base, onClose, onSaved }: Props) {
 
   const [form, setForm] = useState({
     name: base?.name ?? '',
-    townhall: base?.townhall ?? 14,
+    townhall: base?.townhall ?? 19,
     base_type: (base?.base_type ?? 'War') as BaseType,
     base_link: base?.base_link ?? '',
     description: base?.description ?? '',
